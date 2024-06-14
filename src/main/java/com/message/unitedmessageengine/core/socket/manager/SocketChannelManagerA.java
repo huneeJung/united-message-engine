@@ -7,10 +7,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 
 @Slf4j
 @Component
 public class SocketChannelManagerA extends AbstractSocketChannelManager<SocketChannelServiceA> {
+
+    private final ByteBuffer readBuffer = ByteBuffer.allocate(10 * 1024);
 
     @Autowired
     public SocketChannelManagerA(SocketChannelServiceA socketChannelService) {
@@ -19,11 +22,13 @@ public class SocketChannelManagerA extends AbstractSocketChannelManager<SocketCh
 
     @PostConstruct
     public void init() throws IOException {
-        host = System.getProperty("");
-        port = Integer.parseInt(System.getProperty(""));
+        host = System.getProperty("agentA.host");
+        port = Integer.parseInt(System.getProperty("agentA.port"));
         isAliveSelector = true;
         tcpConnect();
+        authenticate();
         monitoring();
     }
+
 
 }

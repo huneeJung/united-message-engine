@@ -37,8 +37,8 @@ public class FetcherService {
         }
         var fetchList = fetcherRepository.getFetchList(fetchSize);
         fetcherRepository.updateBatchFetchList(fetchList);
-        // 시간복잡도를 고려하여 Queue에 넣을때 프로토콜 변환하여 넣음
-        fetchList.forEach(translateRouter::translate);
+
+        FETCH_QUEUE.addAll(fetchList);
     }
 
 }

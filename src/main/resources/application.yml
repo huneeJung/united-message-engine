@@ -1,0 +1,46 @@
+spring:
+  application:
+    name: united-message-engine
+  datasource:
+    url: ENC(WQBwLtXQA6lu3/ezXYMIY4ZIXi87xrR1umhZ0tefTUi2H27HS9nByeQ+f2s2Tsd/sTpj20nkhnSuN2lHdk2V/djxIC+E6jJWAW1j7CBsL4+4OUQjycUYXysQpCjrf43jIZGWd+1X6cDWJYy24elEc8cA3FOdSI1G4fKozsLx7gg7KJX0ltqKrXnphj9nVncMoyPSgZSNxUOCB9yxu38OtFJ20vxNp7W3)
+    username: ENC(UZKxgIDuA26/DA2/J6Btf2eEa8RuaOaS)
+    password: ENC(G3qSSN0DpypzQtFhfSiuUWv4c/4C01rT)
+  #  batch:
+  #    jdbc:
+  #      initialize-schema: always
+  ## Hibernate
+  jpa:
+    open-in-view: true
+    hibernate:
+      ddl-auto: none
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+    show-sql: true
+    properties:
+      hibernate.format_sql: true
+      dialect: org.hibernate.dialect.MySQL5InnoDBDialect
+
+## Logging
+logging:
+  level:
+    root: info
+  pattern:
+    console: "[%-5level] %d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %c{1} - %msg%n"
+
+## Jasypt
+jasypt:
+  encryptor:
+    key: ${jasypt_key}
+
+agentA:
+  version: ENC(lBd9yRajw9KUbPOF2eP4Iw==)
+  host: ENC(fkb+YwlH+9bq/E3hrUSMOgyNlUt3dN9cfkn6P/mb24Q=)
+  port: ENC(C+u7pP0Y4rOgsykkWicWQw==)
+  connect:
+    username: ENC(PzpeZWc8s2xfQdfK3sIeV/c3wbWuU8El)
+    password: ENC(2ZJz8Vlwv7xkulRgVz3YM5c+K+f4thuA)
+
+tcp:
+  ping-cycle: 30000
+  connect-timeout: 30000
+  read-timeout: 5000
