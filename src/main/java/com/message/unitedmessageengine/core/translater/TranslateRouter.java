@@ -1,5 +1,6 @@
 package com.message.unitedmessageengine.core.translater;
 
+import com.message.unitedmessageengine.core.socket.constant.ProtocolConstant.ProtocolType;
 import com.message.unitedmessageengine.core.translater.service.TranslateService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,19 +17,15 @@ public class TranslateRouter {
     @Qualifier("A")
     private final TranslateService destinationAService;
 
-    @Qualifier("B")
-    private final TranslateService destinationBService;
+    public byte[] translate(ProtocolType type, Object element) {
+        var agentType = ((Map<String, Object>) element).get("agentType");
 
-    public Map<String, Object> translate(Map<String, Object> element) {
-        var route = element.get("route");
-
-        if (route.equals("DESTINATION_A")) {
-            return destinationAService.translateToExternalProtocol(element);
-        } else if (route.equals("DESTINATION_B")) {
-            return destinationBService.translateToExternalProtocol(element);
+        if (agentType.equals("agentA")) {
+            return destinationAService.translateToExternalProtocol(type, element);
         }
+
         // TODO 처리 로직 수정
-        log.warn("[지원하지않는 라우팅 경로 감지] ::: route {}", route);
+        log.warn("[지원하지않는 라우팅 경로 감지] ::: route {}", agentType);
         throw new RuntimeException("지원히지 않는 라우팅 경로입니다");
     }
 

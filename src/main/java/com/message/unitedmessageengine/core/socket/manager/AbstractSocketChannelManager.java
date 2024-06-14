@@ -26,9 +26,9 @@ public abstract class AbstractSocketChannelManager<T extends SocketChannelServic
 
     private Selector selector;
     private Thread eventCatchThread;
-    @Value("")
+    @Value("${tcp.connect-timeout}")
     private Integer connectTimeout;
-    @Value("")
+    @Value("${tcp.read-timeout}")
     private Integer readTimeout;
 
     public abstract void init() throws IOException;
@@ -85,7 +85,14 @@ public abstract class AbstractSocketChannelManager<T extends SocketChannelServic
         }
     }
 
-    @Scheduled(fixedDelayString = "1000L")
+    protected void authenticate() throws IOException {
+        // 문자 발송 라인 인증
+        socketChannelService.authenticate("SEND", senderChannel);
+        // 결과 수신 라인 인증
+        socketChannelService.authenticate("REPORT", receiverChannel);
+    }
+
+    @Scheduled(fixedDelayString = "10000L")
     public void healthCheck() {
         try {
             if (!isAliveSelector || !eventCatchThread.isAlive()) {
@@ -105,6 +112,8 @@ public abstract class AbstractSocketChannelManager<T extends SocketChannelServic
                 receiverChannel.socket().setSoTimeout(readTimeout);
                 log.error("[receiverSocketChannel 연결 끊김 Reconnect 수행] ::: host {} , port {}", host, port);
             }
+            socketChannelService.sendPing(senderChannel);
+            socketChannelService.sendPing(receiverChannel);
         } catch (IOException e) {
             log.info("TCP 연결중 에러 발생 ::: message {}, host {}, port {}", e.getMessage(), host, port);
             log.info("", e);
