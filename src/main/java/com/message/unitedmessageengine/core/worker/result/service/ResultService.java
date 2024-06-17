@@ -11,8 +11,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.Map;
 
-import static com.message.unitedmessageengine.core.queue.QueueManager.ACK_QUEUE;
-
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -29,9 +27,6 @@ public class ResultService {
     public void processResult() {
         var count = 0;
         var resultList = new ArrayList<Map<String, Object>>(resultUpdateSize);
-        while (!ACK_QUEUE.isEmpty() && count < resultUpdateSize) {
-            resultList.add(ACK_QUEUE.poll());
-        }
         resultRepository.updateBatchResult(resultList);
     }
 

@@ -1,6 +1,9 @@
 package com.message.unitedmessageengine.core.queue;
 
+import com.message.unitedmessageengine.core.worker.result.dto.ResultDto;
+import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -9,26 +12,26 @@ import java.util.concurrent.ArrayBlockingQueue;
 
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class QueueManager {
 
     public static final ArrayBlockingQueue<Map<String, Object>> FETCH_QUEUE = new ArrayBlockingQueue<>(1000);
     public static final ArrayBlockingQueue<Map<String, Object>> MESSAGE_QUEUE = new ArrayBlockingQueue<>(1000);
     public static final ArrayBlockingQueue<Map<String, Object>> KAKAO_QUEUE = new ArrayBlockingQueue<>(1000);
-    public static final ArrayBlockingQueue<Map<String, Object>> ACK_QUEUE = new ArrayBlockingQueue<>(5000);
-    public static final ArrayBlockingQueue<Map<String, Object>> RESULT_QUEUE = new ArrayBlockingQueue<>(5000);
-
+    public static final ArrayBlockingQueue<ResultDto> RESULT_QUEUE = new ArrayBlockingQueue<>(5000);
     public static Integer fetchQueueSizeLimit;
     public static Integer messageQueueSizeLimit;
     public static Integer kakaoQueueSizeLimit;
-    public static Integer ackQueueSizeLimit;
     public static Integer resultQueueSizeLimit;
 
-    static {
-        fetchQueueSizeLimit = Integer.parseInt(System.getProperty(""));
-        messageQueueSizeLimit = Integer.parseInt(System.getProperty(""));
-        kakaoQueueSizeLimit = Integer.parseInt(System.getProperty(""));
-        ackQueueSizeLimit = Integer.parseInt(System.getProperty(""));
-        resultQueueSizeLimit = Integer.parseInt(System.getProperty(""));
+    private final QueueProperties queueProperties;
+
+    @PostConstruct
+    public void init() {
+        fetchQueueSizeLimit = queueProperties.getLimitFetchSize();
+        messageQueueSizeLimit = queueProperties.getLimitMessageSize();
+        kakaoQueueSizeLimit = queueProperties.getLimitKakaoSize();
+        resultQueueSizeLimit = queueProperties.getLimitResultSize();
     }
 
     @PreDestroy
@@ -41,9 +44,6 @@ public class QueueManager {
 
         }
         if (!KAKAO_QUEUE.isEmpty()) {
-
-        }
-        if (!ACK_QUEUE.isEmpty()) {
 
         }
         if (!RESULT_QUEUE.isEmpty()) {

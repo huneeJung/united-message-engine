@@ -6,11 +6,11 @@ import java.util.UUID;
 
 @Getter
 @Setter
-@Builder
+@ToString
 @NoArgsConstructor
 @AllArgsConstructor
-public class PingA {
+public class FirstPingVo {
 
     private String KEY = UUID.randomUUID().toString().replaceAll("-", "");
-    
+
 }

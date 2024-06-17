@@ -1,6 +1,5 @@
 package com.message.unitedmessageengine.core.worker.fetcher.service;
 
-import com.message.unitedmessageengine.core.translater.TranslateRouter;
 import com.message.unitedmessageengine.core.worker.fetcher.repository.FetcherRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,7 +17,6 @@ import static com.message.unitedmessageengine.core.queue.QueueManager.fetchQueue
 @Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 public class FetcherService {
 
-    private final TranslateRouter translateRouter;
     private final FetcherRepository fetcherRepository;
 
     // TODO 사이즈 지정
