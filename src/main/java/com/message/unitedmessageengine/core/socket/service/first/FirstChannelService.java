@@ -36,13 +36,17 @@ public class FirstChannelService implements ChannelService {
     @Value("${agentA.version}")
     private String version;
 
-    public void authenticate(String line, SocketChannel channel) throws IOException {
-        var connectVO = FirstConnectVo.builder().USERNAME(username).PASSWORD(password)
-                .LINE(line).VERSION(version).build();
-        var authPayload = translator.translateToExternalProtocol(CONNECT, connectVO);
-        if (authPayload.isEmpty()) return;
-        var authBuffer = ByteBuffer.wrap(authPayload.get());
-        channel.write(authBuffer);
+    public void authenticate(String channelType, SocketChannel channel) {
+        try {
+            var connectVO = FirstConnectVo.builder().USERNAME(username).PASSWORD(password)
+                    .LINE(channelType).VERSION(version).build();
+            var authPayload = translator.translateToExternalProtocol(CONNECT, connectVO);
+            if (authPayload.isEmpty()) return;
+            var authBuffer = ByteBuffer.wrap(authPayload.get());
+            channel.write(authBuffer);
+        }catch (IOException e){
+            log.info("[{} Channel] 인증 에러 발생", channelType);
+        }
     }
 
     public void sendPing(SocketChannel senderChannel) throws IOException {
@@ -61,7 +65,7 @@ public class FirstChannelService implements ChannelService {
         process(REPORT, payload);
     }
 
-    private void process(String type, byte[] payload) {
+    private void process(String channelType, byte[] payload) {
         var payloadStr = new String(payload, CHARSET);
         var resultData = translator.covertToMap(payloadStr);
         var header = resultData.get("BEGIN");
@@ -73,19 +77,19 @@ public class FirstChannelService implements ChannelService {
         }
         // 인증 응답인 경우
         if (key == null) {
-            checkAuth(type, resultData);
+            checkAuth(channelType, resultData);
             return;
         }
         RESULT_QUEUE.add(translator.translateToInternalProtocol(ACK, resultData));
     }
 
-    private void checkAuth(String type, Map<String, String> authData) {
+    private void checkAuth(String channelType, Map<String, String> authData) {
         var code = authData.get("CODE");
         var message = authData.get("DATA");
         if (code.equals("100")) {
-            log.info("[{}Channel] 인증 완료 ::: code : {}, message : {}", type, code, message);
+            log.info("[{} Channel] 인증 완료 ::: code {}, message {}", channelType, code, message);
         } else {
-            throw new RuntimeException(String.format("[Channel] 인증 실패 ::: code : %s, message : %s", code, message));
+            throw new RuntimeException(String.format("[Channel] 인증 실패 ::: code %s, message %s", code, message));
         }
     }
 
