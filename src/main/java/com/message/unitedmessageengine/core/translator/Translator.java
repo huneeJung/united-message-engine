@@ -1,4 +1,4 @@
-package com.message.unitedmessageengine.core.translater.service;
+package com.message.unitedmessageengine.core.translator;
 
 import com.message.unitedmessageengine.core.socket.constant.ProtocolConstant.ProtocolType;
 import org.springframework.beans.BeanUtils;
@@ -8,9 +8,9 @@ import org.springframework.beans.BeanWrapperImpl;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.Field;
 
-import static com.message.unitedmessageengine.core.socket.constant.ProtocolConstant.AgentA.CHARSET;
+import static com.message.unitedmessageengine.core.socket.constant.ProtocolConstant.First.CHARSET;
 
-public interface TranslateService {
+public interface Translator {
 
     static byte[] convertToByteArray(Object obj) {
         StringBuilder sb = new StringBuilder();

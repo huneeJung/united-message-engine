@@ -1,8 +1,9 @@
-package com.message.unitedmessageengine.core.socket.service;
+package com.message.unitedmessageengine.core.socket.service.first;
 
-import com.message.unitedmessageengine.core.socket.vo.ConnectA;
-import com.message.unitedmessageengine.core.socket.vo.PingA;
-import com.message.unitedmessageengine.core.translater.service.TranslateService;
+import com.message.unitedmessageengine.core.socket.service.ChannelService;
+import com.message.unitedmessageengine.core.socket.vo.FirstConnectVo;
+import com.message.unitedmessageengine.core.socket.vo.FirstPingVo;
+import com.message.unitedmessageengine.core.translator.Translator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -13,19 +14,18 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 
-import static com.message.unitedmessageengine.core.socket.constant.ProtocolConstant.AgentA.CHARSET;
+import static com.message.unitedmessageengine.core.socket.constant.ProtocolConstant.First.CHARSET;
 import static com.message.unitedmessageengine.core.socket.constant.ProtocolConstant.ProtocolType.CONNECT;
 import static com.message.unitedmessageengine.core.socket.constant.ProtocolConstant.ProtocolType.PING;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class SocketChannelServiceA implements SocketChannelService {
+public class FirstChannelService implements ChannelService {
 
-    private static final Integer BUFFER_SIZE = 10 * 1024; // 10KB
+    @Qualifier("First")
+    private final Translator translator;
 
-    @Qualifier("A")
-    private final TranslateService translateService;
     @Value("${agentA.connect.username}")
     private String username;
     @Value("${agentA.connect.password}")
@@ -34,16 +34,16 @@ public class SocketChannelServiceA implements SocketChannelService {
     private String version;
 
     public void authenticate(String line, SocketChannel channel) throws IOException {
-        var connectVO = ConnectA.builder().USERNAME(username).PASSWORD(password)
+        var connectVO = FirstConnectVo.builder().USERNAME(username).PASSWORD(password)
                 .LINE(line).VERSION(version).build();
-        var authPayload = translateService.translateToExternalProtocol(CONNECT, connectVO);
+        var authPayload = translator.translateToExternalProtocol(CONNECT, connectVO);
         var authBuffer = ByteBuffer.wrap(authPayload);
         channel.write(authBuffer);
     }
 
     public void sendPing(SocketChannel senderChannel) throws IOException {
-        var pingVO = new PingA();
-        var pingPayload = translateService.translateToExternalProtocol(PING, pingVO);
+        var pingVO = new FirstPingVo();
+        var pingPayload = translator.translateToExternalProtocol(PING, pingVO);
         var pingBuffer = ByteBuffer.wrap(pingPayload);
         senderChannel.write(pingBuffer);
     }

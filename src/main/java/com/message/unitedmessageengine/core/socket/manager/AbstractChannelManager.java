@@ -1,6 +1,6 @@
 package com.message.unitedmessageengine.core.socket.manager;
 
-import com.message.unitedmessageengine.core.socket.service.SocketChannelService;
+import com.message.unitedmessageengine.core.socket.service.ChannelService;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
@@ -18,12 +18,12 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import static com.message.unitedmessageengine.core.socket.constant.ProtocolConstant.AgentA.REPORT;
-import static com.message.unitedmessageengine.core.socket.constant.ProtocolConstant.AgentA.SEND;
+import static com.message.unitedmessageengine.core.socket.constant.ProtocolConstant.First.REPORT;
+import static com.message.unitedmessageengine.core.socket.constant.ProtocolConstant.First.SEND;
 
 @Slf4j
 @RequiredArgsConstructor
-public abstract class AbstractSocketChannelManager<T extends SocketChannelService> {
+public abstract class AbstractChannelManager<T extends ChannelService> {
 
     protected final T socketChannelService;
     private final ByteBuffer bytebuffer = ByteBuffer.allocate(10 * 1024);

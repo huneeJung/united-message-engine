@@ -5,7 +5,7 @@ import org.springframework.scheduling.annotation.Async;
 import java.io.IOException;
 import java.nio.channels.SocketChannel;
 
-public interface SocketChannelService {
+public interface ChannelService {
 
     void authenticate(String line, SocketChannel channel) throws IOException;
 

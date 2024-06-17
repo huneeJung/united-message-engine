@@ -1,6 +1,7 @@
-package com.message.unitedmessageengine.core.socket.manager;
+package com.message.unitedmessageengine.core.socket.manager.first;
 
-import com.message.unitedmessageengine.core.socket.service.SocketChannelService;
+import com.message.unitedmessageengine.core.socket.manager.AbstractChannelManager;
+import com.message.unitedmessageengine.core.socket.service.ChannelService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -10,11 +11,11 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @DependsOn("jasyptStringEncryptor")
-public class SocketChannelManagerConfigA extends AbstractSocketChannelManager<SocketChannelService> {
+public class FirstChannelManager extends AbstractChannelManager<ChannelService> {
 
     @Autowired
-    public SocketChannelManagerConfigA(SocketChannelService socketChannelService) {
-        super(socketChannelService);
+    public FirstChannelManager(ChannelService channelService) {
+        super(channelService);
     }
 
     @Value("${agentA.useYN:Y}")

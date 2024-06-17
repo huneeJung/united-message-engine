@@ -1,6 +1,7 @@
-package com.message.unitedmessageengine.core.translater.service;
+package com.message.unitedmessageengine.core.translator.first;
 
 import com.message.unitedmessageengine.core.socket.constant.ProtocolConstant.ProtocolType;
+import com.message.unitedmessageengine.core.translator.Translator;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
@@ -9,13 +10,13 @@ import org.springframework.util.ObjectUtils;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
-import static com.message.unitedmessageengine.core.socket.constant.ProtocolConstant.AgentA.*;
-import static com.message.unitedmessageengine.core.translater.service.TranslateService.convertToByteArray;
+import static com.message.unitedmessageengine.core.socket.constant.ProtocolConstant.First.*;
+import static com.message.unitedmessageengine.core.translator.Translator.convertToByteArray;
 
 @Slf4j
 @Component
-@Qualifier("A")
-public class TranslateServiceA implements TranslateService {
+@Qualifier("First")
+public class FirstTranslator implements Translator {
 
     @Override
     public byte[] translateToExternalProtocol(ProtocolType type, Object oriPayload) {

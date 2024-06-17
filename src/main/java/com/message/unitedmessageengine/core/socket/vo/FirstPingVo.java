@@ -10,7 +10,7 @@ import java.util.UUID;
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor
-public class PingA {
+public class FirstPingVo {
 
     private String KEY = UUID.randomUUID().toString().replaceAll("-", "");
 

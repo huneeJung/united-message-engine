@@ -12,7 +12,7 @@ public class ProtocolConstant {
         CONNECT, SMS, MMS, KKO, REPORT, ACK, PING, PONG
     }
 
-    public static class AgentA {
+    public static class First {
         public static final Charset CHARSET = StandardCharsets.UTF_8;
         public static final String PROTOCOL_PREFIX = "BEGIN ";
         public static final String PROTOCOL_SUFFIX = "END\r\n";
