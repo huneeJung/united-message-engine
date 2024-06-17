@@ -17,6 +17,8 @@ public class ProtocolConstant {
         public static final String PROTOCOL_PREFIX = "BEGIN ";
         public static final String PROTOCOL_SUFFIX = "END\r\n";
         public static final String PROTOCOL_DELIMITER = "\r\n";
+        public static final String SEND = "SEND";
+        public static final String REPORT = "REPORT";
     }
 
 }
