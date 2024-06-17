@@ -37,14 +37,16 @@ public class FirstChannelService implements ChannelService {
         var connectVO = FirstConnectVo.builder().USERNAME(username).PASSWORD(password)
                 .LINE(line).VERSION(version).build();
         var authPayload = translator.translateToExternalProtocol(CONNECT, connectVO);
-        var authBuffer = ByteBuffer.wrap(authPayload);
+        if (authPayload.isEmpty()) return;
+        var authBuffer = ByteBuffer.wrap(authPayload.get());
         channel.write(authBuffer);
     }
 
     public void sendPing(SocketChannel senderChannel) throws IOException {
         var pingVO = new FirstPingVo();
         var pingPayload = translator.translateToExternalProtocol(PING, pingVO);
-        var pingBuffer = ByteBuffer.wrap(pingPayload);
+        if (pingPayload.isEmpty()) return;
+        var pingBuffer = ByteBuffer.wrap(pingPayload.get());
         senderChannel.write(pingBuffer);
     }
 
