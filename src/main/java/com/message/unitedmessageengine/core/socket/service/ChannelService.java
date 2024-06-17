@@ -12,9 +12,9 @@ public interface ChannelService {
     void sendPing(SocketChannel channel) throws IOException;
 
     @Async
-    void processAck(byte[] ackBytes) throws IOException;
+    void processSendResponse(byte[] ackBytes) throws IOException;
 
     @Async
-    void processResult(byte[] resultBytes) throws IOException;
+    void processReportResponse(byte[] resultBytes) throws IOException;
 
 }

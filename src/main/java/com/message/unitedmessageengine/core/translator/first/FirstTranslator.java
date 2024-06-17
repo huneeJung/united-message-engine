@@ -2,6 +2,7 @@ package com.message.unitedmessageengine.core.translator.first;
 
 import com.message.unitedmessageengine.core.socket.constant.ProtocolConstant.ProtocolType;
 import com.message.unitedmessageengine.core.translator.Translator;
+import com.message.unitedmessageengine.core.worker.result.dto.ResultDto;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.BeanWrapper;
@@ -14,14 +15,28 @@ import java.beans.PropertyDescriptor;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
+import java.util.StringTokenizer;
 
 import static com.message.unitedmessageengine.core.socket.constant.ProtocolConstant.First.*;
 
 @Slf4j
 @Component
-@Qualifier("First")
+@Qualifier("firstTranslator")
 public class FirstTranslator implements Translator {
+
+
+    @Override
+    public ResultDto translateToInternalProtocol(ProtocolType type, Object element) {
+        Map<String, String> result = (Map<String, String>) element;
+        return ResultDto.builder()
+                .messageId(result.get("KEY"))
+                .resultCode(result.get("CODE"))
+                .resultMessage(result.get("MESSAGE"))
+                .build();
+    }
 
     @Override
     public Optional<byte[]> translateToExternalProtocol(ProtocolType type, Object oriPayload) throws IOException {
@@ -63,11 +78,6 @@ public class FirstTranslator implements Translator {
         }
     }
 
-    @Override
-    public Optional<byte[]> translateToInternalProtocol(ProtocolType type, Object element) throws IOException {
-        return Optional.empty();
-    }
-
     private byte[] convertToByteArray(Object obj) {
         StringBuilder sb = new StringBuilder();
 
@@ -83,6 +93,19 @@ public class FirstTranslator implements Translator {
             }
         }
         return sb.toString().getBytes(CHARSET);
+    }
+
+    public Map<String, String> covertToMap(String data) {
+        var st = new StringTokenizer(data, "\r\n");
+        var header = st.nextToken().split(" ");
+        var dataMap = new HashMap<String, String>();
+        dataMap.put(header[0], header[1]);
+        while (st.hasMoreTokens()) {
+            var token = st.nextToken().split(":");
+            if (token.length != 2) continue;
+            dataMap.put(token[0], token[1]);
+        }
+        return dataMap;
     }
 
 }

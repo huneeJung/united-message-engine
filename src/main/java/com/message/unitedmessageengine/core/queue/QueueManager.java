@@ -1,5 +1,6 @@
 package com.message.unitedmessageengine.core.queue;
 
+import com.message.unitedmessageengine.core.worker.result.dto.ResultDto;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
@@ -17,12 +18,10 @@ public class QueueManager {
     public static final ArrayBlockingQueue<Map<String, Object>> FETCH_QUEUE = new ArrayBlockingQueue<>(1000);
     public static final ArrayBlockingQueue<Map<String, Object>> MESSAGE_QUEUE = new ArrayBlockingQueue<>(1000);
     public static final ArrayBlockingQueue<Map<String, Object>> KAKAO_QUEUE = new ArrayBlockingQueue<>(1000);
-    public static final ArrayBlockingQueue<Map<String, Object>> ACK_QUEUE = new ArrayBlockingQueue<>(5000);
-    public static final ArrayBlockingQueue<Map<String, Object>> RESULT_QUEUE = new ArrayBlockingQueue<>(5000);
+    public static final ArrayBlockingQueue<ResultDto> RESULT_QUEUE = new ArrayBlockingQueue<>(5000);
     public static Integer fetchQueueSizeLimit;
     public static Integer messageQueueSizeLimit;
     public static Integer kakaoQueueSizeLimit;
-    public static Integer ackQueueSizeLimit;
     public static Integer resultQueueSizeLimit;
 
     private final QueueProperties queueProperties;
@@ -32,7 +31,6 @@ public class QueueManager {
         fetchQueueSizeLimit = queueProperties.getLimitFetchSize();
         messageQueueSizeLimit = queueProperties.getLimitMessageSize();
         kakaoQueueSizeLimit = queueProperties.getLimitKakaoSize();
-        ackQueueSizeLimit = queueProperties.getLimitAckSize();
         resultQueueSizeLimit = queueProperties.getLimitResultSize();
     }
 
@@ -46,9 +44,6 @@ public class QueueManager {
 
         }
         if (!KAKAO_QUEUE.isEmpty()) {
-
-        }
-        if (!ACK_QUEUE.isEmpty()) {
 
         }
         if (!RESULT_QUEUE.isEmpty()) {

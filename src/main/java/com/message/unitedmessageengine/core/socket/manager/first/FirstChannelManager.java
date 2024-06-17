@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
-@DependsOn("jasyptStringEncryptor")
+@DependsOn("firstChannelService")
 public class FirstChannelManager extends AbstractChannelManager<ChannelService> {
 
     @Autowired

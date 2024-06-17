@@ -1,7 +1,6 @@
 package com.message.unitedmessageengine.core.worker;
 
 
-import com.message.unitedmessageengine.core.worker.ack.service.AckService;
 import com.message.unitedmessageengine.core.worker.distributer.service.DistributeService;
 import com.message.unitedmessageengine.core.worker.fetcher.service.FetcherService;
 import com.message.unitedmessageengine.core.worker.result.service.ResultService;
@@ -23,7 +22,6 @@ public class WorkerScheduler {
     private final FetcherService fetcherService;
     private final DistributeService distributeService;
     private final SenderService senderService;
-    private final AckService ackService;
     private final ResultService resultService;
 
     //    @Scheduled(fixedRateString = "1000L")
@@ -75,18 +73,6 @@ public class WorkerScheduler {
 
         log.info("[카카오 발송 종료] ::: KAKAO_QUEUE_SIZE {}, WORKING_TIME {}ms,",
                 KAKAO_QUEUE.size(), Duration.between(start, end).toMillis());
-    }
-
-    //    @Scheduled(fixedRateString = "1000L")
-    public void processAck() {
-        log.info("[ACK 처리 시작] ::: KAKAO_QUEUE_SIZE {}", ACK_QUEUE.size());
-
-        var start = Instant.now();
-        ackService.processAck();
-        var end = Instant.now();
-
-        log.info("[ACK 처리 종료] ::: KAKAO_QUEUE_SIZE {}, WORKING_TIME {}ms,",
-                ACK_QUEUE.size(), Duration.between(start, end).toMillis());
     }
 
     //    @Scheduled(fixedRateString = "1000L")

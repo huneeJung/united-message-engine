@@ -52,7 +52,7 @@ public abstract class AbstractChannelManager<T extends ChannelService> {
             tcpConnect(REPORT);
             performEventObserver();
             anomalyDetectionObserver = Executors.newSingleThreadScheduledExecutor();
-            anomalyDetectionObserver.scheduleAtFixedRate(this::monitoring, pingCycle, pingCycle, TimeUnit.SECONDS);
+            anomalyDetectionObserver.scheduleAtFixedRate(this::monitoring, pingCycle, pingCycle, TimeUnit.MILLISECONDS);
         }
     }
 
@@ -72,13 +72,13 @@ public abstract class AbstractChannelManager<T extends ChannelService> {
                             if (sendChannel.equals(channel)) {
                                 var readCnt = channel.read(bytebuffer);
                                 if (readCnt <= 0) log.info("[SEND CHANNEL] 이벤트 처리 데이터 없음");
-                                socketChannelService.processAck(getPayload(readCnt));
+                                socketChannelService.processSendResponse(getPayload(readCnt));
                             }
                             // REPORT 수신
                             if (reportChannel.equals(channel)) {
                                 var readCnt = channel.read(bytebuffer);
                                 if (readCnt <= 0) log.info("[REPORT CHANNEL] 이벤트 처리 데이터 없음");
-                                socketChannelService.processResult(getPayload(readCnt));
+                                socketChannelService.processReportResponse(getPayload(readCnt));
                             }
                         }
                         bytebuffer.clear();
@@ -100,13 +100,18 @@ public abstract class AbstractChannelManager<T extends ChannelService> {
     private void tcpConnect(String type) {
         try {
             // SEND TCP CONNECT
-            sendChannel = SocketChannel.open();
-            sendChannel.socket().connect(new InetSocketAddress(host, port), connectTimeout);
-            sendChannel.socket().setSoTimeout(readTimeout);
-            sendChannel.configureBlocking(false);
-            sendChannel.register(selector, SelectionKey.OP_READ);
-            if (sendChannel.isConnected()) log.info("[{}Channel] Connect Success - 인증 수행]", type);
-            socketChannelService.authenticate(type, sendChannel);
+            var channel = SocketChannel.open();
+            channel.socket().connect(new InetSocketAddress(host, port), connectTimeout);
+            channel.socket().setSoTimeout(readTimeout);
+            channel.configureBlocking(false);
+            channel.register(selector, SelectionKey.OP_READ);
+            socketChannelService.authenticate(type, channel);
+            if (channel.isConnected()) log.info("[{}Channel] Connect Success - 인증 수행중]", type);
+            if (type.equals(SEND)) {
+                sendChannel = channel;
+            } else if (type.equals(REPORT)) {
+                reportChannel = channel;
+            }
         } catch (IOException e) {
             log.error("[{} CHANNEL] Connect 에러 발생 ::: message {}, host {}, port {}", type, e.getMessage(), host, port);
             log.error("", e);
