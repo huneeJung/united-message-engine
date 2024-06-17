@@ -12,7 +12,7 @@ public class TranslateTest {
 
     @Test
     void test() {
-        String expected = "VERSION:VERSION2\r\nUSERNAME:USERNAME2\r\nPASSWORD:PASSWORD2\r\nLINE:LINE2\r\n";
+        String expected = "USERNAME:USERNAME2\r\nPASSWORD:PASSWORD2\r\nLINE:LINE2\r\nVERSION:VERSION2\r\n";
         var obj = ConnectA.builder()
                 .LINE("LINE2")
                 .USERNAME("USERNAME2")
