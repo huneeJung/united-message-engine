@@ -7,7 +7,7 @@ import java.nio.channels.SocketChannel;
 
 public interface ChannelService {
 
-    void authenticate(String line, SocketChannel channel) throws IOException;
+    void authenticate(String line, SocketChannel channel);
 
     void sendPing(SocketChannel channel) throws IOException;
 

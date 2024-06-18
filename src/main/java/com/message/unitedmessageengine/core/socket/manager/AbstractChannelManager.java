@@ -18,16 +18,13 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import static com.message.unitedmessageengine.core.socket.constant.ProtocolConstant.First.REPORT;
-import static com.message.unitedmessageengine.core.socket.constant.ProtocolConstant.First.SEND;
-
 @Slf4j
 @RequiredArgsConstructor
 public abstract class AbstractChannelManager<T extends ChannelService> {
 
     protected final T socketChannelService;
-    private final ByteBuffer bytebuffer = ByteBuffer.allocate(10 * 1024);
-    protected boolean isAliveProcessor;
+    private final ByteBuffer readBuffer = ByteBuffer.allocate(10 * 1024);
+    protected boolean isAliveChannelManager;
     protected SocketChannel sendChannel;
     protected SocketChannel reportChannel;
     protected String host;
@@ -46,19 +43,40 @@ public abstract class AbstractChannelManager<T extends ChannelService> {
 
     @PostConstruct
     public void init() throws IOException {
-        if (isAliveProcessor) {
-            selector = Selector.open();
-            tcpConnect(SEND);
-            tcpConnect(REPORT);
-            performEventObserver();
-            anomalyDetectionObserver = Executors.newSingleThreadScheduledExecutor();
-            anomalyDetectionObserver.scheduleAtFixedRate(this::monitoring, pingCycle, pingCycle, TimeUnit.MILLISECONDS);
+        if (!isAliveChannelManager) return;
+        selector = Selector.open();
+        connectSendChannel();
+        connectReportChannel();
+        performEventObserver();
+        anomalyDetectionObserver = Executors.newSingleThreadScheduledExecutor();
+        anomalyDetectionObserver.scheduleAtFixedRate(this::monitoring, pingCycle, pingCycle, TimeUnit.MILLISECONDS);
+    }
+
+    public abstract void send(Object data);
+
+    protected abstract void connectSendChannel();
+
+    protected abstract void connectReportChannel();
+
+    protected SocketChannel tcpConnect() {
+        try {
+            // SEND TCP CONNECT
+            var channel = SocketChannel.open();
+            channel.socket().connect(new InetSocketAddress(host, port), connectTimeout);
+            channel.socket().setSoTimeout(readTimeout);
+            channel.configureBlocking(false);
+            channel.register(selector, SelectionKey.OP_READ);
+            return channel;
+        } catch (IOException e) {
+            log.error("[SOCKET CHANNEL] Connect 에러 발생 ::: message {}, host {}, port {}", e.getMessage(), host, port);
+            log.error("", e);
+            throw new RuntimeException(e);
         }
     }
 
     private void performEventObserver() {
         var eventObserver = new Thread(() -> {
-            while (isAliveProcessor) {
+            while (isAliveChannelManager) {
                 try {
                     selector.select(selectTimeout);
 
@@ -68,27 +86,32 @@ public abstract class AbstractChannelManager<T extends ChannelService> {
                         var key = keyIterator.next();
                         if (key.isReadable()) {
                             SocketChannel channel = (SocketChannel) key.channel();
+                            if(!channel.isConnected()){
+                                key.cancel();
+                                channel.close();
+                                continue;
+                            }
                             // SEND 수신
                             if (sendChannel.equals(channel)) {
-                                var readCnt = channel.read(bytebuffer);
+                                var readCnt = channel.read(readBuffer);
                                 if (readCnt <= 0) log.info("[SEND CHANNEL] 이벤트 처리 데이터 없음");
                                 socketChannelService.processSendResponse(getPayload(readCnt));
                             }
                             // REPORT 수신
                             if (reportChannel.equals(channel)) {
-                                var readCnt = channel.read(bytebuffer);
+                                var readCnt = channel.read(readBuffer);
                                 if (readCnt <= 0) log.info("[REPORT CHANNEL] 이벤트 처리 데이터 없음");
                                 socketChannelService.processReportResponse(getPayload(readCnt));
                             }
                         }
-                        bytebuffer.clear();
+                        readBuffer.clear();
                         keyIterator.remove();
                     }
                 } catch (ClosedSelectorException e) {
-                    isAliveProcessor = false;
+                    isAliveChannelManager = false;
                     log.info("[SELECTOR] 종료 작업 수행");
                 } catch (Exception e) {
-                    isAliveProcessor = false;
+                    isAliveChannelManager = false;
                     log.error("[SELECTOR] 수신 이벤트 처리 에러 발생 ::: message {}", e.getMessage());
                     log.error("", e);
                 }
@@ -97,47 +120,23 @@ public abstract class AbstractChannelManager<T extends ChannelService> {
         eventObserver.start();
     }
 
-    private void tcpConnect(String type) {
-        try {
-            // SEND TCP CONNECT
-            var channel = SocketChannel.open();
-            channel.socket().connect(new InetSocketAddress(host, port), connectTimeout);
-            channel.socket().setSoTimeout(readTimeout);
-            channel.configureBlocking(false);
-            channel.register(selector, SelectionKey.OP_READ);
-            socketChannelService.authenticate(type, channel);
-            if (channel.isConnected()) log.info("[{}Channel] Connect Success - 인증 수행중]", type);
-            if (type.equals(SEND)) {
-                sendChannel = channel;
-            } else if (type.equals(REPORT)) {
-                reportChannel = channel;
-            }
-        } catch (IOException e) {
-            log.error("[{} CHANNEL] Connect 에러 발생 ::: message {}, host {}, port {}", type, e.getMessage(), host, port);
-            log.error("", e);
-        }
-    }
-
     private byte[] getPayload(int readCnt) {
         var bytes = new byte[readCnt];
         // 버퍼 인덱스 위치 초기화
-        bytebuffer.flip();
-        bytebuffer.get(bytes);
+        readBuffer.flip();
+        readBuffer.get(bytes);
         return bytes;
     }
 
     private void monitoring() {
-        if (!isAliveProcessor) {
-            isAliveProcessor = true;
+        if (!isAliveChannelManager) {
+            isAliveChannelManager = true;
             performEventObserver();
-            log.warn("[EVENT OBSERVER] 이상 감지 Regenerate 수행 ::: isAliveSelector {}", isAliveProcessor);
+            log.warn("[EVENT OBSERVER] 이상 감지 Regenerate 수행 ::: isAliveSelector {}", isAliveChannelManager);
         }
         try {
             if (!sendChannel.isConnected()) {
-                sendChannel.close();
-                sendChannel = SocketChannel.open();
-                sendChannel.socket().connect(new InetSocketAddress(host, port), connectTimeout);
-                sendChannel.socket().setSoTimeout(readTimeout);
+                connectSendChannel();
                 log.warn("[SEND CHANNEL] Disconnect - Reconnect 수행 ::: host {} , port {}", host, port);
             }
             socketChannelService.sendPing(sendChannel);
@@ -147,10 +146,7 @@ public abstract class AbstractChannelManager<T extends ChannelService> {
         }
         try {
             if (!reportChannel.isConnected()) {
-                reportChannel.close();
-                reportChannel = SocketChannel.open();
-                reportChannel.socket().connect(new InetSocketAddress(host, port), connectTimeout);
-                reportChannel.socket().setSoTimeout(readTimeout);
+                connectReportChannel();
                 log.warn("[REPORT CHANNEL] Disconnect - Reconnect 수행 ::: host {} , port {}", host, port);
             }
             socketChannelService.sendPing(reportChannel);
@@ -163,7 +159,7 @@ public abstract class AbstractChannelManager<T extends ChannelService> {
     @PreDestroy
     public void destroy() throws IOException {
         if (anomalyDetectionObserver != null) anomalyDetectionObserver.shutdown();
-        isAliveProcessor = false;
+        isAliveChannelManager = false;
         if (selector != null) selector.close();
         if (sendChannel != null) sendChannel.close();
         if (reportChannel != null) reportChannel.close();

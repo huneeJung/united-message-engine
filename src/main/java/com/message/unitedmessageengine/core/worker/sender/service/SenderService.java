@@ -1,5 +1,6 @@
 package com.message.unitedmessageengine.core.worker.sender.service;
 
+import com.message.unitedmessageengine.core.socket.manager.first.FirstChannelManager;
 import com.message.unitedmessageengine.core.worker.sender.repository.SenderRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -12,8 +13,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class SenderService {
 
     private final SenderRepository senderRepository;
+    private final FirstChannelManager channelManager;
 
     public void send() {
-
     }
 }
