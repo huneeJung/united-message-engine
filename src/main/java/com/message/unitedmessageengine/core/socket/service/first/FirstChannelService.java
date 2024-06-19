@@ -4,6 +4,7 @@ import com.message.unitedmessageengine.core.socket.service.ChannelService;
 import com.message.unitedmessageengine.core.socket.vo.FirstConnectVo;
 import com.message.unitedmessageengine.core.socket.vo.FirstPingVo;
 import com.message.unitedmessageengine.core.translator.first.FirstTranslator;
+import com.message.unitedmessageengine.core.worker.result.dto.ResultDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -44,7 +45,7 @@ public class FirstChannelService implements ChannelService {
             if (authPayload.isEmpty()) return;
             var authBuffer = ByteBuffer.wrap(authPayload.get());
             channel.write(authBuffer);
-        }catch (IOException e){
+        } catch (IOException e) {
             log.info("[{} Channel] 인증 에러 발생", channelType);
         }
     }
@@ -72,7 +73,7 @@ public class FirstChannelService implements ChannelService {
         var key = resultData.getOrDefault("KEY", null);
         // PONG 인 경우
         if (header.equals(PONG.name())) {
-            log.info("[PONG] 수신 ::: key : {}", key);
+            log.info("[PONG] 수신 ::: key {}", key);
             return;
         }
         // 인증 응답인 경우
@@ -80,7 +81,14 @@ public class FirstChannelService implements ChannelService {
             checkAuth(channelType, resultData);
             return;
         }
-        RESULT_QUEUE.add(translator.translateToInternalProtocol(ACK, resultData));
+        RESULT_QUEUE.add(
+                ResultDto.builder()
+                        .messageId(resultData.get("KEY"))
+                        .resultCode(resultData.get("CODE"))
+                        .resultMessage(resultData.get("DATA"))
+                        .build()
+        );
+        log.info("[RESULT QUEUE] 메시지 결과 삽입 ::: queueSize {}", RESULT_QUEUE.size());
     }
 
     private void checkAuth(String channelType, Map<String, String> authData) {

@@ -1,16 +1,18 @@
 package com.message.unitedmessageengine.core.socket.vo;
 
-import lombok.*;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
 import java.util.UUID;
 
 @Getter
 @Setter
 @ToString
-@NoArgsConstructor
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class FirstPingVo {
 
-    private String KEY = UUID.randomUUID().toString().replaceAll("-", "");
+    private final String KEY = UUID.randomUUID().toString().replaceAll("-", "");
 
 }

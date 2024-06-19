@@ -6,18 +6,15 @@ import lombok.*;
 @Setter
 @Builder
 @ToString
-@NoArgsConstructor
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class FirstConnectVo {
 
+    private final String USERNAME;
 
-    private String USERNAME;
-
-    private String PASSWORD;
-
+    private final String PASSWORD;
     // SEND OR REPORT
-    private String LINE;
+    private final String LINE;
 
-    private String VERSION;
+    private final String VERSION;
 
 }

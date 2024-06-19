@@ -1,0 +1,19 @@
+version: '3.1'
+
+services:
+  db:
+    image: mysql:8.0
+    command: --default-authentication-plugin=caching_sha2_password
+    restart: always
+    environment:
+      MYSQL_DATABASE: united_message_engine
+      MYSQL_USER: message_engine
+      MYSQL_PASSWORD: message_engine!
+      MYSQL_ROOT_PASSWORD: message_engine!
+    ports:
+      - "3310:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+volumes:
+  mysql_data:
