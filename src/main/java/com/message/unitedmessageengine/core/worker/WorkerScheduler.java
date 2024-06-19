@@ -8,10 +8,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
 
+import static com.message.unitedmessageengine.core.queue.QueueManager.ACK_QUEUE;
 import static com.message.unitedmessageengine.core.queue.QueueManager.RESULT_QUEUE;
 
 @Slf4j
@@ -28,8 +31,10 @@ public class WorkerScheduler {
     @Value("${worker.update-count:1000}")
     private Integer updateSize;
 
-    @Scheduled(initialDelayString = "2000", fixedDelayString = "100000")
-    public void sendMessageFromQueue() {
+    //    @Async
+    @Transactional
+    @Scheduled(initialDelayString = "2000", fixedDelayString = "1000")
+    public void sendMessageFromQueue() throws IOException {
         var fetchList = senderService.findAllMessages("SLM", fetchCount);
         if (fetchList.isEmpty()) {
             log.info("SENDER");
@@ -45,7 +50,24 @@ public class WorkerScheduler {
                 fetchList.size(), Duration.between(start, end).toMillis());
     }
 
-    @Scheduled(initialDelayString = "2000", fixedDelayString = "1000")
+    @Transactional
+//    @Scheduled(initialDelayString = "2000", fixedDelayString = "5000")
+    public void processAck() {
+        if (ACK_QUEUE.isEmpty()) {
+            return;
+        }
+        log.info("[ACK] 결과 처리 시작 ::: RESULT_QUEUE_SIZE {}", ACK_QUEUE.size());
+
+        var start = Instant.now();
+        resultService.processAck(updateSize);
+        var end = Instant.now();
+
+        log.info("[ACK] 결과 처리 종료 ::: RESULT_QUEUE_SIZE {}, WORKING_TIME {}ms,",
+                ACK_QUEUE.size(), Duration.between(start, end).toMillis());
+    }
+
+    @Transactional
+//    @Scheduled(initialDelayString = "2000", fixedDelayString = "5000")
     public void processResult() {
         if (RESULT_QUEUE.isEmpty()) {
             return;

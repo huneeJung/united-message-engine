@@ -3,20 +3,19 @@ package com.message.unitedmessageengine.core.socket.manager;
 import com.message.unitedmessageengine.core.socket.service.ChannelService;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.net.StandardSocketOptions;
 import java.nio.ByteBuffer;
 import java.nio.channels.ClosedSelectorException;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 import java.util.HashSet;
+import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -30,10 +29,9 @@ public abstract class AbstractChannelManager<T extends ChannelService> {
     protected final Set<SocketChannel> reportChannelList = new HashSet<>();
 
     protected final T socketChannelService;
-    private final ByteBuffer readBuffer = ByteBuffer.allocate(10 * 1024);
+    private final ByteBuffer ackBuffer = ByteBuffer.allocate(10 * 1024);
+    private final ByteBuffer reportBuffer = ByteBuffer.allocate(10 * 1024);
 
-    @Getter
-    protected SocketChannel mainSendChannel;
     protected boolean isAliveChannelManager;
     protected String host;
     protected Integer port;
@@ -56,7 +54,6 @@ public abstract class AbstractChannelManager<T extends ChannelService> {
         if (!isAliveChannelManager) return;
         selector = Selector.open();
         for (int i = 0; i < senderCnt; i++) connectSendChannel();
-        mainSendChannel = sendChannelList.stream().findAny().get();
         for (int i = 0; i < reportCnt; i++) connectReportChannel();
         performEventObserver();
         anomalyDetectionObserver = Executors.newSingleThreadScheduledExecutor();
@@ -66,6 +63,8 @@ public abstract class AbstractChannelManager<T extends ChannelService> {
     protected abstract void connectSendChannel();
 
     protected abstract void connectReportChannel();
+
+    protected abstract Queue<String> parsePayload(ByteBuffer buffer, byte[] data);
 
     protected SocketChannel tcpConnect() {
         try {
@@ -93,30 +92,28 @@ public abstract class AbstractChannelManager<T extends ChannelService> {
                     var keyIterator = selectedKeys.iterator();
                     while (keyIterator.hasNext()) {
                         var key = keyIterator.next();
+                        keyIterator.remove();
                         if (key.isReadable()) {
                             SocketChannel channel = (SocketChannel) key.channel();
-                            if (!channel.isConnected()) {
+                            try {
+                                // SEND 수신
+                                if (sendChannelList.contains(channel)) {
+                                    var readCnt = channel.read(ackBuffer);
+                                    if (readCnt <= 0) log.info("[SEND CHANNEL] 이벤트 처리 데이터 없음");
+                                    socketChannelService.processSendResponse(getAckPayload());
+                                }
+                                // REPORT 수신
+                                if (reportChannelList.contains(channel)) {
+                                    var readCnt = channel.read(reportBuffer);
+                                    if (readCnt <= 0) log.info("[REPORT CHANNEL] 이벤트 처리 데이터 없음");
+                                    socketChannelService.processReportResponse(channel, getReportPayload());
+                                }
+                            } catch (IOException e) {
                                 key.cancel();
                                 channel.close();
-                                continue;
-                            }
-                            // SEND 수신
-                            if (sendChannelList.contains(channel)) {
-                                var readCnt = channel.read(readBuffer);
-                                if (readCnt <= 0) log.info("[SEND CHANNEL] 이벤트 처리 데이터 없음");
-                                log.info("[SEND CHANNEL] 이벤트 처리 데이터 수신");
-                                socketChannelService.processSendResponse(getPayload(readCnt));
-                            }
-                            // REPORT 수신
-                            if (reportChannelList.contains(channel)) {
-                                var readCnt = channel.read(readBuffer);
-                                if (readCnt <= 0) log.info("[REPORT CHANNEL] 이벤트 처리 데이터 없음");
-                                log.info("[REPORT CHANNEL] 이벤트 처리 데이터 수신");
-                                socketChannelService.processReportResponse(getPayload(readCnt));
+                                throw new IOException(e);
                             }
                         }
-                        readBuffer.clear();
-                        keyIterator.remove();
                     }
                 } catch (ClosedSelectorException e) {
                     isAliveChannelManager = false;
@@ -131,12 +128,20 @@ public abstract class AbstractChannelManager<T extends ChannelService> {
         eventObserver.start();
     }
 
-    private byte[] getPayload(int readCnt) {
-        var bytes = new byte[readCnt];
+    private Queue<String> getAckPayload() {
         // 버퍼 인덱스 위치 초기화
-        readBuffer.flip();
-        readBuffer.get(bytes);
-        return bytes;
+        ackBuffer.flip();
+        var bytes = new byte[ackBuffer.remaining()];
+        ackBuffer.get(bytes);
+        return parsePayload(ackBuffer, bytes);
+    }
+
+    private Queue<String> getReportPayload() {
+        // 버퍼 인덱스 위치 초기화
+        reportBuffer.flip();
+        var bytes = new byte[reportBuffer.remaining()];
+        reportBuffer.get(bytes);
+        return parsePayload(reportBuffer, bytes);
     }
 
     private void monitoring() {
@@ -154,9 +159,6 @@ public abstract class AbstractChannelManager<T extends ChannelService> {
                     log.warn("[SEND CHANNEL] Disconnect 감지 ::: host {} , port {}", host, port);
                 } else {
                     socketChannelService.sendPing(sendChannel);
-                    var mainBufferSize = mainSendChannel.getOption(StandardSocketOptions.SO_SNDBUF);
-                    var sendBufferSize = sendChannel.getOption(StandardSocketOptions.SO_SNDBUF);
-                    if (mainBufferSize > sendBufferSize) mainSendChannel = sendChannel;
                 }
             }
             while (sendChannelList.size() < senderCnt) {

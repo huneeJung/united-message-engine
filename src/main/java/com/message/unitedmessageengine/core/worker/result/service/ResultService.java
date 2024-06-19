@@ -1,5 +1,6 @@
 package com.message.unitedmessageengine.core.worker.result.service;
 
+import com.message.unitedmessageengine.core.worker.result.dto.AckDto;
 import com.message.unitedmessageengine.core.worker.result.dto.ResultDto;
 import com.message.unitedmessageengine.core.worker.result.repository.ResultRepository;
 import lombok.RequiredArgsConstructor;
@@ -11,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.message.unitedmessageengine.core.queue.QueueManager.ACK_QUEUE;
 import static com.message.unitedmessageengine.core.queue.QueueManager.RESULT_QUEUE;
 
 @Slf4j
@@ -22,15 +24,27 @@ public class ResultService {
     private final ResultRepository resultRepository;
 
     @Transactional
+    public void processAck(Integer updateSize) {
+        List<AckDto> batchList = new ArrayList<>();
+        while (!ACK_QUEUE.isEmpty()) {
+            var ackDto = ACK_QUEUE.poll();
+            batchList.add(ackDto);
+            if (batchList.size() >= updateSize) break;
+//            log.info("[ACK] 결과 처리 완료 ::: messageId {}", ackDto.getMessageId());
+        }
+        resultRepository.batchUpdateAck(batchList);
+    }
+
+    @Transactional
     public void processResult(Integer updateSize) {
         List<ResultDto> batchList = new ArrayList<>();
         while (!RESULT_QUEUE.isEmpty()) {
             var resultDto = RESULT_QUEUE.poll();
             batchList.add(resultDto);
             if (batchList.size() >= updateSize) break;
-            log.info("[RESULT] 결과 처리 완료 ::: messageId {}", resultDto.getMessageId());
+//            log.info("[RESULT] 결과 처리 완료 ::: messageId {}", resultDto.getMessageId());
         }
-        resultRepository.batchUpdate(batchList);
+        resultRepository.batchUpdateResult(batchList);
     }
 
 }

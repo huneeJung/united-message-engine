@@ -3,8 +3,12 @@ package com.message.unitedmessageengine.core.socket.service.first;
 import com.message.unitedmessageengine.core.socket.service.ChannelService;
 import com.message.unitedmessageengine.core.socket.vo.FirstConnectVo;
 import com.message.unitedmessageengine.core.socket.vo.FirstPingVo;
+import com.message.unitedmessageengine.core.socket.vo.ReportAckVo;
 import com.message.unitedmessageengine.core.translator.first.FirstTranslator;
+import com.message.unitedmessageengine.core.worker.result.dto.AckDto;
 import com.message.unitedmessageengine.core.worker.result.dto.ResultDto;
+import com.message.unitedmessageengine.core.worker.result.repository.ResultRepository;
+import com.message.unitedmessageengine.core.worker.sender.repository.SenderRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -14,11 +18,12 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
+import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 
-import static com.message.unitedmessageengine.core.queue.QueueManager.RESULT_QUEUE;
 import static com.message.unitedmessageengine.core.socket.constant.ProtocolConstant.First.REPORT;
-import static com.message.unitedmessageengine.core.socket.constant.ProtocolConstant.First.*;
+import static com.message.unitedmessageengine.core.socket.constant.ProtocolConstant.First.SEND;
 import static com.message.unitedmessageengine.core.socket.constant.ProtocolConstant.ProtocolType.*;
 
 @Slf4j
@@ -26,6 +31,9 @@ import static com.message.unitedmessageengine.core.socket.constant.ProtocolConst
 @RequiredArgsConstructor
 @Qualifier("firstChannelService")
 public class FirstChannelService implements ChannelService {
+
+    private final SenderRepository senderRepository;
+    private final ResultRepository resultRepository;
 
     @Qualifier("firstTranslator")
     private final FirstTranslator translator;
@@ -58,37 +66,82 @@ public class FirstChannelService implements ChannelService {
         senderChannel.write(pingBuffer);
     }
 
-    public void processSendResponse(byte[] payload) {
-        process(SEND, payload);
+    public void processSendResponse(Queue<String> dataQueue) {
+        while (!dataQueue.isEmpty()) {
+            var data = dataQueue.poll();
+            var mapDataOpt = translator.covertToMap(data);
+            if (mapDataOpt.isEmpty()) continue;
+            var mapData = mapDataOpt.get();
+            var header = mapData.get("BEGIN");
+            var key = mapData.getOrDefault("KEY", null);
+            // PONG 인 경우
+            if (header.equals(PONG.name())) {
+//                log.info("[PONG] 수신 ::: key {}", key);
+                continue;
+            }
+            // 인증 응답인 경우
+            if (key == null) {
+                checkAuth(SEND, mapData);
+                continue;
+            }
+            resultRepository.batchUpdateAck(List.of(AckDto.builder()
+                    .messageId(mapData.get("KEY"))
+                    .resultCode(mapData.get("CODE"))
+                    .resultMessage(mapData.get("DATA"))
+                    .build()));
+//            ACK_QUEUE.add(
+//                    AckDto.builder()
+//                            .messageId(mapData.get("KEY"))
+//                            .resultCode(mapData.get("CODE"))
+//                            .resultMessage(mapData.get("DATA"))
+//                            .build()
+//            );
+//            log.info("[ACK QUEUE] 메시지 결과 삽입 ::: messageId {}", key);
+        }
     }
 
-    public void processReportResponse(byte[] payload) {
-        process(REPORT, payload);
-    }
-
-    private void process(String channelType, byte[] payload) {
-        var payloadStr = new String(payload, CHARSET);
-        var resultData = translator.covertToMap(payloadStr);
-        var header = resultData.get("BEGIN");
-        var key = resultData.getOrDefault("KEY", null);
-        // PONG 인 경우
-        if (header.equals(PONG.name())) {
-            log.info("[PONG] 수신 ::: key {}", key);
-            return;
+    public void processReportResponse(SocketChannel reportChannel, Queue<String> dataQueue) {
+        while (!dataQueue.isEmpty()) {
+            var data = dataQueue.poll();
+            var mapDataOpt = translator.covertToMap(data);
+            if (mapDataOpt.isEmpty()) continue;
+            var mapData = mapDataOpt.get();
+            var header = mapData.get("BEGIN");
+            var key = mapData.getOrDefault("KEY", null);
+            // PONG 인 경우
+            if (header.equals(PONG.name())) {
+//                log.info("[PONG] 수신 ::: key {}", key);
+                continue;
+            }
+            // 인증 응답인 경우
+            if (key == null) {
+                checkAuth(REPORT, mapData);
+                continue;
+            }
+            resultRepository.batchUpdateResult(List.of(ResultDto.builder()
+                    .messageId(key)
+                    .resultCode(mapData.get("CODE"))
+                    .resultMessage(mapData.get("DATA"))
+                    .build()));
+//            RESULT_QUEUE.add(
+//                    ResultDto.builder()
+//                            .messageId(key)
+//                            .resultCode(mapData.get("CODE"))
+//                            .resultMessage(mapData.get("DATA"))
+//                            .build()
+//            );
+//            log.info("[RESULT QUEUE] 메시지 결과 삽입 ::: messageId {}", key);
+            try {
+                var reportAckVo = new ReportAckVo(key);
+                var reportAckPayload = translator.translateToExternalProtocol(ACK, reportAckVo);
+                if (reportAckPayload.isEmpty()) continue;
+                var reportAckBuffer = ByteBuffer.wrap(reportAckPayload.get());
+                reportChannel.write(reportAckBuffer);
+//                log.info("[REPORT CHANNEL] 결과 수신 응답 성공 ::: messageId {}", key);
+            } catch (IOException e) {
+                log.info("[REPORT CHANNEL] 결과 수신 응답 실패 ::: messageId {}", key);
+            }
         }
-        // 인증 응답인 경우
-        if (key == null) {
-            checkAuth(channelType, resultData);
-            return;
-        }
-        RESULT_QUEUE.add(
-                ResultDto.builder()
-                        .messageId(resultData.get("KEY"))
-                        .resultCode(resultData.get("CODE"))
-                        .resultMessage(resultData.get("DATA"))
-                        .build()
-        );
-        log.info("[RESULT QUEUE] 메시지 결과 삽입 ::: queueSize {}", RESULT_QUEUE.size());
     }
 
     private void checkAuth(String channelType, Map<String, String> authData) {
