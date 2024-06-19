@@ -4,6 +4,7 @@ import org.springframework.scheduling.annotation.Async;
 
 import java.io.IOException;
 import java.nio.channels.SocketChannel;
+import java.util.Queue;
 
 public interface ChannelService {
 
@@ -12,9 +13,9 @@ public interface ChannelService {
     void sendPing(SocketChannel channel) throws IOException;
 
     @Async
-    void processSendResponse(byte[] ackBytes) throws IOException;
+    void processSendResponse(Queue<String> ackBytes) throws IOException;
 
     @Async
-    void processReportResponse(byte[] resultBytes) throws IOException;
+    void processReportResponse(SocketChannel reportChannel, Queue<String> resultBytes) throws IOException;
 
 }

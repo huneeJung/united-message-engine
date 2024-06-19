@@ -13,5 +13,6 @@ public class QueueProperties {
     private int limitFetchSize;
     private int limitMessageSize;
     private int limitKakaoSize;
+    private int limitAckSize;
     private int limitResultSize;
 }

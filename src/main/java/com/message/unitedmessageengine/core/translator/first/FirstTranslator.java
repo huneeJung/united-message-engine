@@ -93,17 +93,22 @@ public class FirstTranslator implements Translator {
         return sb.toString().getBytes(CHARSET);
     }
 
-    public Map<String, String> covertToMap(String data) {
-        var st = new StringTokenizer(data, "\r\n");
-        var header = st.nextToken().split(" ");
+    public Optional<Map<String, String>> covertToMap(String data) {
         var dataMap = new HashMap<String, String>();
-        dataMap.put(header[0], header[1]);
-        while (st.hasMoreTokens()) {
-            var token = st.nextToken().split(":");
-            if (token.length != 2) continue;
-            dataMap.put(token[0], token[1]);
+        try {
+            var st = new StringTokenizer(data, "\r\n");
+            var header = st.nextToken().split(" ");
+            dataMap.put(header[0], header[1]);
+            while (st.hasMoreTokens()) {
+                var token = st.nextToken().split(":");
+                if (token.length != 2) continue;
+                dataMap.put(token[0], token[1]);
+            }
+        } catch (Exception e) {
+            log.info("[수신] 전문 이상 발생 ::: payload {}", data);
+            return Optional.empty();
         }
-        return dataMap;
+        return Optional.of(dataMap);
     }
 
 }
