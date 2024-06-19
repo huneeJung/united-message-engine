@@ -2,7 +2,6 @@ package com.message.unitedmessageengine.core.translator.first;
 
 import com.message.unitedmessageengine.core.socket.constant.ProtocolConstant.ProtocolType;
 import com.message.unitedmessageengine.core.translator.Translator;
-import com.message.unitedmessageengine.core.worker.result.dto.ResultDto;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.BeanWrapper;
@@ -29,17 +28,12 @@ public class FirstTranslator implements Translator {
 
 
     @Override
-    public ResultDto translateToInternalProtocol(ProtocolType type, Object element) {
-        Map<String, String> result = (Map<String, String>) element;
-        return ResultDto.builder()
-                .messageId(result.get("KEY"))
-                .resultCode(result.get("CODE"))
-                .resultMessage(result.get("MESSAGE"))
-                .build();
+    public Object translateToInternalProtocol(ProtocolType type, Object element) {
+        return null;
     }
 
     @Override
-    public Optional<byte[]> translateToExternalProtocol(ProtocolType type, Object oriPayload) throws IOException {
+    public Optional<byte[]> translateToExternalProtocol(ProtocolType type, Object oriPayload) {
         if (ObjectUtils.isEmpty(oriPayload)) {
             log.warn("[Translator] 외부 규격 변환 실패 - Payload 빈값");
             return Optional.empty();
@@ -75,6 +69,10 @@ public class FirstTranslator implements Translator {
             out.write(convertedPayload);
             out.write(PROTOCOL_SUFFIX.getBytes(CHARSET));
             return Optional.of(out.toByteArray());
+        } catch (IOException e) {
+            log.warn("[Translator] 외부 규격 변환 실패 - message {}", e.getMessage());
+            log.warn("", e);
+            return Optional.empty();
         }
     }
 

@@ -14,7 +14,7 @@ class JasyptTest {
     @Test
     void jasypt() {
         System.out.println("key : " + key);
-        String secret = "";
+        String secret = "message_engine!";
 
         String encodingKey = jasyptEncoding(secret);
         String decodingKey = jasyptDecoding(encodingKey);

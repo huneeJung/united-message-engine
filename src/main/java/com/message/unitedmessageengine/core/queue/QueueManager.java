@@ -18,7 +18,7 @@ public class QueueManager {
     public static final ArrayBlockingQueue<Map<String, Object>> FETCH_QUEUE = new ArrayBlockingQueue<>(1000);
     public static final ArrayBlockingQueue<Map<String, Object>> MESSAGE_QUEUE = new ArrayBlockingQueue<>(1000);
     public static final ArrayBlockingQueue<Map<String, Object>> KAKAO_QUEUE = new ArrayBlockingQueue<>(1000);
-    public static final ArrayBlockingQueue<ResultDto> RESULT_QUEUE = new ArrayBlockingQueue<>(5000);
+    public static final ArrayBlockingQueue<ResultDto> RESULT_QUEUE = new ArrayBlockingQueue<>(100000);
     public static Integer fetchQueueSizeLimit;
     public static Integer messageQueueSizeLimit;
     public static Integer kakaoQueueSizeLimit;
