@@ -14,9 +14,7 @@ import java.nio.channels.ClosedSelectorException;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
-import java.util.HashSet;
-import java.util.Queue;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -25,8 +23,8 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 public abstract class AbstractChannelManager<T extends ChannelService> {
 
-    protected final Set<SocketChannel> sendChannelList = new HashSet<>();
-    protected final Set<SocketChannel> reportChannelList = new HashSet<>();
+    protected final Set<SocketChannel> sendChannelSet = new HashSet<>();
+    protected final Set<SocketChannel> reportChannelSet = new HashSet<>();
 
     protected final T socketChannelService;
     private final ByteBuffer ackBuffer = ByteBuffer.allocate(10 * 1024);
@@ -82,6 +80,17 @@ public abstract class AbstractChannelManager<T extends ChannelService> {
         }
     }
 
+    public List<SocketChannel> getSendChannelList() {
+        var socketChannelList = new ArrayList<SocketChannel>();
+        for (SocketChannel channel : sendChannelSet) {
+            if (channel == null || !channel.isConnected()) {
+                continue;
+            }
+            socketChannelList.add(channel);
+        }
+        return socketChannelList;
+    }
+
     private void performEventObserver() {
         var eventObserver = new Thread(() -> {
             while (isAliveChannelManager) {
@@ -97,18 +106,20 @@ public abstract class AbstractChannelManager<T extends ChannelService> {
                             SocketChannel channel = (SocketChannel) key.channel();
                             try {
                                 // SEND 수신
-                                if (sendChannelList.contains(channel)) {
+                                if (sendChannelSet.contains(channel)) {
                                     var readCnt = channel.read(ackBuffer);
                                     if (readCnt <= 0) log.info("[SEND CHANNEL] 이벤트 처리 데이터 없음");
                                     socketChannelService.processSendResponse(getAckPayload());
                                 }
                                 // REPORT 수신
-                                if (reportChannelList.contains(channel)) {
+                                if (reportChannelSet.contains(channel)) {
                                     var readCnt = channel.read(reportBuffer);
                                     if (readCnt <= 0) log.info("[REPORT CHANNEL] 이벤트 처리 데이터 없음");
                                     socketChannelService.processReportResponse(channel, getReportPayload());
                                 }
                             } catch (IOException e) {
+                                sendChannelSet.remove(channel);
+                                reportChannelSet.remove(channel);
                                 key.cancel();
                                 channel.close();
                                 throw new IOException(e);
@@ -150,43 +161,15 @@ public abstract class AbstractChannelManager<T extends ChannelService> {
             performEventObserver();
             log.warn("[EVENT OBSERVER] 이상 감지 Regenerate 수행 ::: isAliveSelector {}", isAliveChannelManager);
         }
-        try {
-            var iteratorSendChannel = sendChannelList.iterator();
-            while (iteratorSendChannel.hasNext()) {
-                var sendChannel = iteratorSendChannel.next();
-                if (!sendChannel.isConnected()) {
-                    iteratorSendChannel.remove();
-                    log.warn("[SEND CHANNEL] Disconnect 감지 ::: host {} , port {}", host, port);
-                } else {
-                    socketChannelService.sendPing(sendChannel);
-                }
-            }
-            while (sendChannelList.size() < senderCnt) {
-                connectSendChannel();
-                log.warn("[SEND CHANNEL] Reconnect 수행 ::: host {} , port {}", host, port);
-            }
-        } catch (IOException e) {
-            log.error("[SEND CHANNEL] Reconnect 에러 발생 ::: message {}, host {}, port {}", e.getMessage(), host, port);
-            log.error("", e);
+        sendChannelSet.forEach(socketChannelService::sendPing);
+        reportChannelSet.forEach(socketChannelService::sendPing);
+        while (sendChannelSet.size() < senderCnt) {
+            connectSendChannel();
+            log.warn("[SEND CHANNEL] Reconnect 수행 ::: host {} , port {}", host, port);
         }
-        try {
-            var iteratorReportChannel = reportChannelList.iterator();
-            while (iteratorReportChannel.hasNext()) {
-                var reportChannel = iteratorReportChannel.next();
-                if (!reportChannel.isConnected()) {
-                    iteratorReportChannel.remove();
-                    log.warn("[REPORT CHANNEL] Disconnect 감지 ::: host {} , port {}", host, port);
-                } else {
-                    socketChannelService.sendPing(reportChannel);
-                }
-            }
-            while (reportChannelList.size() < reportCnt) {
-                connectReportChannel();
-                log.warn("[REPORT CHANNEL] Reconnect 수행 ::: host {} , port {}", host, port);
-            }
-        } catch (IOException e) {
-            log.error("[REPORT CHANNEL] Reconnect 에러 발생 ::: message {}, host {}, port {}", e.getMessage(), host, port);
-            log.error("", e);
+        while (reportChannelSet.size() < reportCnt) {
+            connectReportChannel();
+            log.warn("[REPORT CHANNEL] Reconnect 수행 ::: host {} , port {}", host, port);
         }
     }
 
@@ -195,8 +178,8 @@ public abstract class AbstractChannelManager<T extends ChannelService> {
         if (anomalyDetectionObserver != null) anomalyDetectionObserver.shutdown();
         isAliveChannelManager = false;
         if (selector != null) selector.close();
-        for (SocketChannel sendChannel : sendChannelList) if (sendChannel != null) sendChannel.close();
-        for (SocketChannel reportChannel : reportChannelList) if (reportChannel != null) reportChannel.close();
+        for (SocketChannel sendChannel : sendChannelSet) if (sendChannel != null) sendChannel.close();
+        for (SocketChannel reportChannel : reportChannelSet) if (reportChannel != null) reportChannel.close();
     }
 
 }

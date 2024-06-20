@@ -9,11 +9,8 @@ import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Component;
 
 import java.nio.ByteBuffer;
-import java.nio.channels.SocketChannel;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Queue;
 
 import static com.message.unitedmessageengine.core.socket.constant.ProtocolConstant.First.*;
@@ -28,27 +25,16 @@ public class FirstChannelManager extends AbstractChannelManager<ChannelService> 
         super(channelService);
     }
 
-    public List<SocketChannel> getSendChannelList() {
-        List<SocketChannel> socketChannelList = new ArrayList<>();
-        for (SocketChannel channel : sendChannelList) {
-            if (channel == null || !channel.isConnected()) {
-                continue;
-            }
-            socketChannelList.add(channel);
-        }
-        return socketChannelList;
-    }
-
     protected void connectSendChannel() {
         var sendChannel = tcpConnect();
         socketChannelService.authenticate(SEND, sendChannel);
-        sendChannelList.add(sendChannel);
+        sendChannelSet.add(sendChannel);
     }
 
     protected void connectReportChannel() {
         var reportChannel = tcpConnect();
         socketChannelService.authenticate(REPORT, reportChannel);
-        reportChannelList.add(reportChannel);
+        reportChannelSet.add(reportChannel);
     }
 
     protected Queue<String> parsePayload(ByteBuffer buffer, byte[] payload) {
