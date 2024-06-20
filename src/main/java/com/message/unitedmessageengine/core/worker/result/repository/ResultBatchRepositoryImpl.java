@@ -64,7 +64,7 @@ public class ResultBatchRepositoryImpl implements ResultBatchRepository {
     }
 
     private void setStatement(PreparedStatement ps, AckDto resultDto) throws SQLException {
-        ps.setString(1, resultDto.getResultCode() == null || resultDto.getResultCode().equals("100") ? "P" : "C");
+        ps.setString(1, "C");
         ps.setString(2, resultDto.getResultCode());
         ps.setString(3, resultDto.getResultMessage());
         ps.setString(4, resultDto.getMessageId());

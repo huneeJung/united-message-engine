@@ -10,7 +10,6 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
 
@@ -34,7 +33,7 @@ public class WorkerScheduler {
     //    @Async
     @Transactional
     @Scheduled(initialDelayString = "2000", fixedDelayString = "1000")
-    public void sendMessageFromQueue() throws IOException {
+    public void sendMessageFromQueue() {
         var fetchList = senderService.findAllMessages("SLM", fetchCount);
         if (fetchList.isEmpty()) {
             log.info("SENDER");
@@ -51,7 +50,7 @@ public class WorkerScheduler {
     }
 
     @Transactional
-//    @Scheduled(initialDelayString = "2000", fixedDelayString = "5000")
+    @Scheduled(initialDelayString = "2000", fixedDelayString = "10000")
     public void processAck() {
         if (ACK_QUEUE.isEmpty()) {
             return;
@@ -67,7 +66,7 @@ public class WorkerScheduler {
     }
 
     @Transactional
-//    @Scheduled(initialDelayString = "2000", fixedDelayString = "5000")
+    @Scheduled(initialDelayString = "2000", fixedDelayString = "5000")
     public void processResult() {
         if (RESULT_QUEUE.isEmpty()) {
             return;

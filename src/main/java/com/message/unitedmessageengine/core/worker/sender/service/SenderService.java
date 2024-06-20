@@ -35,20 +35,20 @@ public class SenderService {
     }
 
     @Transactional
-    public void send(List<ExternalMessageDto> fetchList) throws IOException {
+    public void send(List<ExternalMessageDto> fetchList) {
         senderRepository.batchUpdate(fetchList);
 
-        var channelList = channelManager.getSendChannelList();
-        if (channelList.isEmpty()) {
+        var sendChannelList = channelManager.getSendChannelList();
+        if (sendChannelList.isEmpty()) {
             log.warn("[SENDER] 발송 가능 채널 없음");
             throw new RuntimeException("[SENDER] 발송 가능 채널 없음");
         }
 
-        var distributeCnt = fetchList.size() / channelList.size();
+        var distributeCnt = fetchList.size() / sendChannelList.size();
 
         var cnt = 0;
         var index = 0;
-        var channel = channelList.get(index);
+        var sendChannel = sendChannelList.get(index);
         for (ExternalMessageDto messageDto : fetchList) {
             try {
                 cnt++;
@@ -58,10 +58,10 @@ public class SenderService {
                 // TODO :
                 if (messagePayload.isEmpty()) continue;
                 var messageBuffer = ByteBuffer.wrap(messagePayload.get());
-                channel.write(messageBuffer);
+                sendChannel.write(messageBuffer);
                 if (cnt > distributeCnt) {
-                    index = Math.min(index + 1, channelList.size() - 1);
-                    channel = channelList.get(index);
+                    index = Math.min(index + 1, sendChannelList.size() - 1);
+                    sendChannel = sendChannelList.get(index);
                     cnt = 0;
                 }
             } catch (IOException e) {

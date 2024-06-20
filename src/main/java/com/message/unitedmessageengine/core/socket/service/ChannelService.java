@@ -10,7 +10,7 @@ public interface ChannelService {
 
     void authenticate(String line, SocketChannel channel);
 
-    void sendPing(SocketChannel channel) throws IOException;
+    void sendPing(SocketChannel channel);
 
     @Async
     void processSendResponse(Queue<String> ackBytes) throws IOException;

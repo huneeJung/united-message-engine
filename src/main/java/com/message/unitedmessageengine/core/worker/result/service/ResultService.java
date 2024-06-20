@@ -1,10 +1,13 @@
 package com.message.unitedmessageengine.core.worker.result.service;
 
+import com.message.unitedmessageengine.core.socket.manager.first.FirstChannelManager;
+import com.message.unitedmessageengine.core.translator.first.FirstTranslator;
 import com.message.unitedmessageengine.core.worker.result.dto.AckDto;
 import com.message.unitedmessageengine.core.worker.result.dto.ResultDto;
 import com.message.unitedmessageengine.core.worker.result.repository.ResultRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,7 +24,11 @@ import static com.message.unitedmessageengine.core.queue.QueueManager.RESULT_QUE
 @Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 public class ResultService {
 
+    private final FirstChannelManager channelManager;
     private final ResultRepository resultRepository;
+
+    @Qualifier("firstTranslator")
+    private final FirstTranslator translator;
 
     @Transactional
     public void processAck(Integer updateSize) {
@@ -45,6 +52,7 @@ public class ResultService {
 //            log.info("[RESULT] 결과 처리 완료 ::: messageId {}", resultDto.getMessageId());
         }
         resultRepository.batchUpdateResult(batchList);
+        log.info("[RESULT] 결과 처리 배치 완료 ::: batchSize {}", batchList.size());
     }
 
 }

@@ -7,8 +7,6 @@ import com.message.unitedmessageengine.core.socket.vo.ReportAckVo;
 import com.message.unitedmessageengine.core.translator.first.FirstTranslator;
 import com.message.unitedmessageengine.core.worker.result.dto.AckDto;
 import com.message.unitedmessageengine.core.worker.result.dto.ResultDto;
-import com.message.unitedmessageengine.core.worker.result.repository.ResultRepository;
-import com.message.unitedmessageengine.core.worker.sender.repository.SenderRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -18,10 +16,11 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
-import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 
+import static com.message.unitedmessageengine.core.queue.QueueManager.ACK_QUEUE;
+import static com.message.unitedmessageengine.core.queue.QueueManager.RESULT_QUEUE;
 import static com.message.unitedmessageengine.core.socket.constant.ProtocolConstant.First.REPORT;
 import static com.message.unitedmessageengine.core.socket.constant.ProtocolConstant.First.SEND;
 import static com.message.unitedmessageengine.core.socket.constant.ProtocolConstant.ProtocolType.*;
@@ -31,9 +30,6 @@ import static com.message.unitedmessageengine.core.socket.constant.ProtocolConst
 @RequiredArgsConstructor
 @Qualifier("firstChannelService")
 public class FirstChannelService implements ChannelService {
-
-    private final SenderRepository senderRepository;
-    private final ResultRepository resultRepository;
 
     @Qualifier("firstTranslator")
     private final FirstTranslator translator;
@@ -58,12 +54,17 @@ public class FirstChannelService implements ChannelService {
         }
     }
 
-    public void sendPing(SocketChannel senderChannel) throws IOException {
-        var pingVO = new FirstPingVo();
-        var pingPayload = translator.translateToExternalProtocol(PING, pingVO);
-        if (pingPayload.isEmpty()) return;
-        var pingBuffer = ByteBuffer.wrap(pingPayload.get());
-        senderChannel.write(pingBuffer);
+    public void sendPing(SocketChannel senderChannel) {
+        try {
+            var pingVO = new FirstPingVo();
+            var pingPayload = translator.translateToExternalProtocol(PING, pingVO);
+            if (pingPayload.isEmpty()) return;
+            var pingBuffer = ByteBuffer.wrap(pingPayload.get());
+            senderChannel.write(pingBuffer);
+        } catch (IOException e) {
+            log.warn("[PING] 처리 에러 발생 ::: message {}", e.getMessage());
+            log.warn("", e);
+        }
     }
 
     public void processSendResponse(Queue<String> dataQueue) {
@@ -84,18 +85,14 @@ public class FirstChannelService implements ChannelService {
                 checkAuth(SEND, mapData);
                 continue;
             }
-            resultRepository.batchUpdateAck(List.of(AckDto.builder()
-                    .messageId(mapData.get("KEY"))
-                    .resultCode(mapData.get("CODE"))
-                    .resultMessage(mapData.get("DATA"))
-                    .build()));
-//            ACK_QUEUE.add(
-//                    AckDto.builder()
-//                            .messageId(mapData.get("KEY"))
-//                            .resultCode(mapData.get("CODE"))
-//                            .resultMessage(mapData.get("DATA"))
-//                            .build()
-//            );
+            if (mapData.get("CODE").equals("100")) return;
+            ACK_QUEUE.add(
+                    AckDto.builder()
+                            .messageId(mapData.get("KEY"))
+                            .resultCode(mapData.get("CODE"))
+                            .resultMessage(mapData.get("DATA"))
+                            .build()
+            );
 //            log.info("[ACK QUEUE] 메시지 결과 삽입 ::: messageId {}", key);
         }
     }
@@ -118,19 +115,17 @@ public class FirstChannelService implements ChannelService {
                 checkAuth(REPORT, mapData);
                 continue;
             }
-            resultRepository.batchUpdateResult(List.of(ResultDto.builder()
-                    .messageId(key)
-                    .resultCode(mapData.get("CODE"))
-                    .resultMessage(mapData.get("DATA"))
-                    .build()));
-//            RESULT_QUEUE.add(
-//                    ResultDto.builder()
-//                            .messageId(key)
-//                            .resultCode(mapData.get("CODE"))
-//                            .resultMessage(mapData.get("DATA"))
-//                            .build()
-//            );
+
+            RESULT_QUEUE.add(
+                    ResultDto.builder()
+                            .messageId(key)
+                            .resultCode(mapData.get("CODE"))
+                            .resultMessage(mapData.get("DATA"))
+                            .build()
+            );
+
 //            log.info("[RESULT QUEUE] 메시지 결과 삽입 ::: messageId {}", key);
+//            resultRepository.updateMessageResult("C", mapData.get("CODE"), mapData.get("DATA"), key);
             try {
                 var reportAckVo = new ReportAckVo(key);
                 var reportAckPayload = translator.translateToExternalProtocol(ACK, reportAckVo);
