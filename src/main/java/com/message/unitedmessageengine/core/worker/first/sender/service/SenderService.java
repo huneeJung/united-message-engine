@@ -1,13 +1,13 @@
 package com.message.unitedmessageengine.core.worker.first.sender.service;
 
+import com.google.common.primitives.Bytes;
 import com.message.unitedmessageengine.core.socket.manager.first.FirstChannelManager;
-import com.message.unitedmessageengine.core.translator.first.FirstFileTranslator;
+import com.message.unitedmessageengine.core.translator.first.FirstImageTranslator;
 import com.message.unitedmessageengine.core.translator.first.FirstTranslator;
 import com.message.unitedmessageengine.core.worker.first.sender.repository.SenderRepository;
 import com.message.unitedmessageengine.core.worker.first.sender.vo.ImageVo;
 import com.message.unitedmessageengine.core.worker.first.sender.vo.MessageVo;
 import com.message.unitedmessageengine.entity.MessageEntity;
-import com.message.unitedmessageengine.utils.ByteUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -31,10 +31,10 @@ public class SenderService {
 
     @Qualifier("firstTranslator")
     private final FirstTranslator translator;
-    private final FirstFileTranslator fileTranslator;
+    @Qualifier("firstImageTranslator")
+    private final FirstImageTranslator fileTranslator;
 
     private final FirstChannelManager channelManager;
-
     private final SenderRepository senderRepository;
 
     public List<MessageEntity> findAllMessages(String serviceDivision, Integer fetchCount) {
@@ -61,12 +61,16 @@ public class SenderService {
                 cnt++;
                 var messageVo = MessageVo.from(messageEntity);
                 var messagePayload = translator.convertToBytes(messageVo);
-                if (messageEntity.getServiceType().equals(MMS.name()) && !messageEntity.getImageList().isEmpty()) {
+                if (messageEntity.getServiceType().equals(MMS.name())) {
+                    if(messageEntity.getImageList().isEmpty()) {
+                        log.info("");
+                        continue;
+                    }
                     var imageList = messageEntity.getImageList();
                     for (int i = 0; i < imageList.size(); i++) {
                         var imageDto = ImageVo.from(imageList.get(i));
                         var filePayload = fileTranslator.readFileImage(i + 1, imageDto);
-                        messagePayload = ByteUtils.mergeByteArrays(messagePayload, filePayload);
+                        messagePayload = Bytes.concat(messagePayload, filePayload);
                     }
                 }
                 var tcpPayload = translator.addTcpFraming(

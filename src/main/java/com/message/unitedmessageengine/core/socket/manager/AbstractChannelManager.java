@@ -112,6 +112,8 @@ public abstract class AbstractChannelManager<T extends ChannelService> {
                                     socketChannelService.processSendResponse(getAckPayload());
                                 }
                                 // REPORT 수신
+                                // TODO Selector 분리 성능 테스트
+                                // TODO 만약 성능이 좋다면, 하나의 설렉터에 하나의 채널을 등록하여 관리하는 방식으로 수정하여 다시 성능 테스트 수행
                                 if (reportChannelSet.contains(channel)) {
                                     var readCnt = channel.read(reportBuffer);
                                     if (readCnt <= 0) log.info("[REPORT CHANNEL] 이벤트 처리 데이터 없음");
