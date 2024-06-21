@@ -13,7 +13,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayDeque;
 import java.util.Queue;
 
-import static com.message.unitedmessageengine.core.socket.constant.ProtocolConstant.First.*;
+import static com.message.unitedmessageengine.constant.ProtocolConstant.First.*;
 
 @Slf4j
 @Component

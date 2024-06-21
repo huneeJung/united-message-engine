@@ -1,7 +1,7 @@
 package com.message.unitedmessageengine.core.queue;
 
-import com.message.unitedmessageengine.core.worker.result.dto.AckDto;
-import com.message.unitedmessageengine.core.worker.result.dto.ResultDto;
+import com.message.unitedmessageengine.core.worker.first.result.dto.AckDto;
+import com.message.unitedmessageengine.core.worker.first.result.dto.ResultDto;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;

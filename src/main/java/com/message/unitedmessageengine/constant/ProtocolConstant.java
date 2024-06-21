@@ -1,9 +1,10 @@
-package com.message.unitedmessageengine.core.socket.constant;
+package com.message.unitedmessageengine.constant;
 
 import lombok.Getter;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
 
 public class ProtocolConstant {
 
@@ -19,6 +20,13 @@ public class ProtocolConstant {
         public static final String PROTOCOL_DELIMITER = "\r\n";
         public static final String SEND = "SEND";
         public static final String REPORT = "REPORT";
+
+        public static final Map<String, String> CONVERT_TYPE =
+                Map.of(
+                        "SMS", "SMS",
+                        "LMS", "TXT",
+                        "MMS", "IMT"
+                );
     }
 
 }

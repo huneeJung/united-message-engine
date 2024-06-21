@@ -1,7 +1,7 @@
 package com.message.unitedmessageengine;
 
-import com.message.unitedmessageengine.core.worker.sender.repository.SenderRepository;
-import com.message.unitedmessageengine.entity.Message;
+import com.message.unitedmessageengine.entity.MessageEntity;
+import com.message.unitedmessageengine.sample.DummyRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -14,16 +14,17 @@ import java.util.UUID;
 
 @ActiveProfiles("test")
 @SpringBootTest
-public class DummyMessageInsertTest {
+public class SMSDummyInsert {
 
 
     @Autowired
-    private SenderRepository senderRepository;
+    private DummyRepository dummyRepository;
 
+    // 10건
     @Test
     public void dummyInsertTen() {
         for (int i = 0; i < 10; i++) {
-            var message = Message.builder()
+            var message = MessageEntity.builder()
                     .messageId(UUID.randomUUID().toString().replaceAll("-", ""))
                     .content("TEST")
                     .fromNumber("01046176166")
@@ -34,15 +35,16 @@ public class DummyMessageInsertTest {
                     .statusCode("W")
                     .toNumber("01912341234")
                     .build();
-            senderRepository.save(message);
+            dummyRepository.save(message);
         }
     }
 
+    // 1000건
     @Test
     public void dummyInsertThousand() {
-        List<Message> list = new ArrayList<>();
+        List<MessageEntity> list = new ArrayList<>();
         for (int i = 1000; i < 2000; i++) {
-            var message = Message.builder()
+            var message = MessageEntity.builder()
                     .messageId(UUID.randomUUID().toString().replaceAll("-", ""))
                     .content("TEST")
                     .fromNumber("01046176166")
@@ -55,14 +57,15 @@ public class DummyMessageInsertTest {
                     .build();
             list.add(message);
         }
-        senderRepository.batchInsert(list);
+        dummyRepository.batchInsertMessage(list);
     }
 
+    // 10000건
     @Test
     public void dummyInsertBig() {
-        List<Message> list = new ArrayList<>();
+        List<MessageEntity> list = new ArrayList<>();
         for (int i = 10000; i < 20000; i++) {
-            var message = Message.builder()
+            var message = MessageEntity.builder()
                     .messageId(UUID.randomUUID().toString().replaceAll("-", ""))
                     .content("TEST")
                     .fromNumber("01046176166")
@@ -75,14 +78,15 @@ public class DummyMessageInsertTest {
                     .build();
             list.add(message);
         }
-        senderRepository.batchInsert(list);
+        dummyRepository.batchInsertMessage(list);
     }
 
+    // 100000건
     @Test
     public void dummyInsertMoreBig() {
-        List<Message> list = new ArrayList<>();
+        List<MessageEntity> list = new ArrayList<>();
         for (int i = 100000; i < 200000; i++) {
-            var message = Message.builder()
+            var message = MessageEntity.builder()
                     .messageId(UUID.randomUUID().toString().replaceAll("-", ""))
                     .content("TEST")
                     .fromNumber("01046176166")
@@ -95,7 +99,7 @@ public class DummyMessageInsertTest {
                     .build();
             list.add(message);
             if (list.size() == 5000) {
-                senderRepository.batchInsert(list);
+                dummyRepository.batchInsertMessage(list);
                 list = new ArrayList<>();
             }
         }

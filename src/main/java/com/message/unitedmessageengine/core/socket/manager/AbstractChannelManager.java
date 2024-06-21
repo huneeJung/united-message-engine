@@ -118,11 +118,11 @@ public abstract class AbstractChannelManager<T extends ChannelService> {
                                     socketChannelService.processReportResponse(channel, getReportPayload());
                                 }
                             } catch (IOException e) {
-                                sendChannelSet.remove(channel);
+                                var removedSendChannel = sendChannelSet.remove(channel);
                                 reportChannelSet.remove(channel);
                                 key.cancel();
                                 channel.close();
-                                throw new IOException(e);
+                                log.warn("[{} Channel] Read Event 처리중 발생", removedSendChannel ? "SEND" : "REPORT", e.getMessage());
                             }
                         }
                     }
@@ -160,16 +160,18 @@ public abstract class AbstractChannelManager<T extends ChannelService> {
             isAliveChannelManager = true;
             performEventObserver();
             log.warn("[EVENT OBSERVER] 이상 감지 Regenerate 수행 ::: isAliveSelector {}", isAliveChannelManager);
-        }
-        sendChannelSet.forEach(socketChannelService::sendPing);
-        reportChannelSet.forEach(socketChannelService::sendPing);
-        while (sendChannelSet.size() < senderCnt) {
-            connectSendChannel();
-            log.warn("[SEND CHANNEL] Reconnect 수행 ::: host {} , port {}", host, port);
-        }
-        while (reportChannelSet.size() < reportCnt) {
-            connectReportChannel();
-            log.warn("[REPORT CHANNEL] Reconnect 수행 ::: host {} , port {}", host, port);
+        } else if (sendChannelSet.size() != senderCnt || reportChannelSet.size() != reportCnt) {
+            while (sendChannelSet.size() < senderCnt) {
+                connectSendChannel();
+                log.warn("[SEND CHANNEL] Reconnect 수행 ::: host {} , port {}", host, port);
+            }
+            while (reportChannelSet.size() < reportCnt) {
+                connectReportChannel();
+                log.warn("[REPORT CHANNEL] Reconnect 수행 ::: host {} , port {}", host, port);
+            }
+        } else {
+            sendChannelSet.forEach(socketChannelService::sendPing);
+            reportChannelSet.forEach(socketChannelService::sendPing);
         }
     }
 

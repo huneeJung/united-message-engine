@@ -1,8 +1,8 @@
 package com.message.unitedmessageengine.core.worker;
 
 
-import com.message.unitedmessageengine.core.worker.result.service.ResultService;
-import com.message.unitedmessageengine.core.worker.sender.service.SenderService;
+import com.message.unitedmessageengine.core.worker.first.result.service.ResultService;
+import com.message.unitedmessageengine.core.worker.first.sender.service.SenderService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -35,10 +35,7 @@ public class WorkerScheduler {
     @Scheduled(initialDelayString = "2000", fixedDelayString = "1000")
     public void sendMessageFromQueue() {
         var fetchList = senderService.findAllMessages("SLM", fetchCount);
-        if (fetchList.isEmpty()) {
-            log.info("SENDER");
-            return;
-        }
+        if (fetchList.isEmpty()) return;
         log.info("[SENDER] 발송 처리 시작 ::: messageListSize {}", fetchList.size());
 
         var start = Instant.now();

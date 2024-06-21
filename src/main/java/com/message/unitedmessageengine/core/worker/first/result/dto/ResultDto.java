@@ -1,4 +1,4 @@
-package com.message.unitedmessageengine.core.worker.result.dto;
+package com.message.unitedmessageengine.core.worker.first.result.dto;
 
 import lombok.*;
 
@@ -7,8 +7,8 @@ import lombok.*;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class AckDto {
-    
+public class ResultDto {
+
     private String messageId;
     private String resultCode;
     private String resultMessage;

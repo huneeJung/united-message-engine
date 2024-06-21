@@ -7,7 +7,7 @@ import lombok.*;
 @Builder
 @ToString
 @RequiredArgsConstructor
-public class FirstConnectVo {
+public class ConnectVo {
 
     private final String USERNAME;
 

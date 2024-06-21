@@ -5,6 +5,7 @@ import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Getter
@@ -15,7 +16,7 @@ import java.time.LocalDateTime;
 @Table(name = "MESSAGE", indexes = {
         @Index(name = "idx_messageid", columnList = "MESSAGE_ID")
 })
-public class Message {
+public class MessageEntity {
 
     @Id
     @Column(name = "ID")
@@ -33,6 +34,9 @@ public class Message {
     @Column(name = "SERVICE_TYPE", nullable = false)
     private String serviceType;
 
+    @Column(name = "TITLE")
+    private String title;
+
     @Column(name = "CONTENT", nullable = false)
     private String content;
 
@@ -46,9 +50,6 @@ public class Message {
     @Column(name = "FROM_NUMBER")
     private String fromNumber;
 
-    @Column(name = "IMAGE_PATH")
-    private String imagePath;
-
     @CreatedDate
     @Column(name = "REG_DTT")
     private LocalDateTime regDtt;
@@ -61,5 +62,8 @@ public class Message {
 
     @Column(name = "RESULT_MESSAGE")
     private String resultMessage;
+
+    @OneToMany(mappedBy = "message", fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ImageEntity> imageList;
 
 }
