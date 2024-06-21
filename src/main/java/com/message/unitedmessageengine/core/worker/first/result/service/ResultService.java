@@ -24,7 +24,6 @@ import static com.message.unitedmessageengine.core.queue.QueueManager.RESULT_QUE
 @Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 public class ResultService {
 
-    private final FirstChannelManager channelManager;
     private final ResultRepository resultRepository;
 
     @Qualifier("firstTranslator")

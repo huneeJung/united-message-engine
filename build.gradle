@@ -48,6 +48,10 @@ dependencies {
     // monitoring
     runtimeOnly 'io.micrometer:micrometer-registry-prometheus' // 마이크로미터 프로메테우스 구현체
     implementation 'org.springframework.boot:spring-boot-starter-actuator' // 메트릭 수집기
+
+    // guava
+    implementation group: 'com.google.guava', name: 'guava', version: '32.1.2-jre'
+
 }
 
 tasks.named('test') {

@@ -6,8 +6,6 @@ import java.util.Optional;
 
 public interface Translator {
 
-    Object translateToInternalProtocol(ProtocolType type, Object element);
-
     Optional<byte[]> addTcpFraming(ProtocolType type, byte[] element);
 
 }

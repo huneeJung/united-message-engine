@@ -1,5 +1,6 @@
 package com.message.unitedmessageengine.core.translator.first;
 
+import com.google.common.primitives.Bytes;
 import com.message.unitedmessageengine.constant.ProtocolConstant.ProtocolType;
 import com.message.unitedmessageengine.core.translator.Translator;
 import lombok.RequiredArgsConstructor;
@@ -18,20 +19,12 @@ import java.util.Optional;
 import java.util.StringTokenizer;
 
 import static com.message.unitedmessageengine.constant.ProtocolConstant.First.*;
-import static com.message.unitedmessageengine.utils.ByteUtils.mergeByteArrays;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
 @Qualifier("firstTranslator")
 public class FirstTranslator implements Translator {
-
-    private final FirstFileTranslator fileTranslator;
-
-    @Override
-    public Object translateToInternalProtocol(ProtocolType type, Object element) {
-        return null;
-    }
 
     @Override
     public Optional<byte[]> addTcpFraming(ProtocolType type, byte[] payload) {
@@ -59,8 +52,8 @@ public class FirstTranslator implements Translator {
                 log.warn("[Translator] 외부 규격 변환 실패 - 지원하지 않는 헤더 타입");
                 return Optional.empty();
         }
-        var result = mergeByteArrays(begin.getBytes(CHARSET), payload);
-        result = mergeByteArrays(result, PROTOCOL_SUFFIX.getBytes(CHARSET));
+        var result = Bytes.concat(begin.getBytes(CHARSET), payload);
+        result = Bytes.concat(result, PROTOCOL_SUFFIX.getBytes(CHARSET));
         return Optional.of(result);
     }
 
