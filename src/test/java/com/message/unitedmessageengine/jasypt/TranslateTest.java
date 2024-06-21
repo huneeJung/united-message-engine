@@ -1,6 +1,6 @@
 package com.message.unitedmessageengine.jasypt;
 
-import com.message.unitedmessageengine.core.socket.vo.FirstConnectVo;
+import com.message.unitedmessageengine.core.socket.vo.ConnectVo;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.BeanWrapper;
@@ -11,7 +11,7 @@ import org.springframework.util.Assert;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.Field;
 
-import static com.message.unitedmessageengine.core.socket.constant.ProtocolConstant.First.CHARSET;
+import static com.message.unitedmessageengine.constant.ProtocolConstant.First.CHARSET;
 
 @SpringJUnitConfig
 class TranslateTest {
@@ -19,7 +19,7 @@ class TranslateTest {
     @Test
     void test() {
         String expected = "USERNAME:USERNAME2\r\nPASSWORD:PASSWORD2\r\nLINE:LINE2\r\nVERSION:VERSION2\r\n";
-        var obj = FirstConnectVo.builder()
+        var obj = ConnectVo.builder()
                 .LINE("LINE2")
                 .USERNAME("USERNAME2")
                 .PASSWORD("PASSWORD2")

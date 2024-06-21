@@ -11,7 +11,7 @@ import java.util.UUID;
 @Setter
 @ToString
 @RequiredArgsConstructor
-public class FirstPingVo {
+public class PingVo {
 
     private final String KEY = UUID.randomUUID().toString().replaceAll("-", "");
 

@@ -1,16 +1,16 @@
 package com.message.unitedmessageengine.core.socket.service.first;
 
 import com.message.unitedmessageengine.core.socket.service.ChannelService;
-import com.message.unitedmessageengine.core.socket.vo.FirstConnectVo;
-import com.message.unitedmessageengine.core.socket.vo.FirstPingVo;
+import com.message.unitedmessageengine.core.socket.vo.ConnectVo;
+import com.message.unitedmessageengine.core.socket.vo.PingVo;
 import com.message.unitedmessageengine.core.socket.vo.ReportAckVo;
 import com.message.unitedmessageengine.core.translator.first.FirstTranslator;
-import com.message.unitedmessageengine.core.worker.result.dto.AckDto;
-import com.message.unitedmessageengine.core.worker.result.dto.ResultDto;
+import com.message.unitedmessageengine.core.worker.first.result.dto.ResultDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -19,11 +19,10 @@ import java.nio.channels.SocketChannel;
 import java.util.Map;
 import java.util.Queue;
 
-import static com.message.unitedmessageengine.core.queue.QueueManager.ACK_QUEUE;
+import static com.message.unitedmessageengine.constant.ProtocolConstant.First.REPORT;
+import static com.message.unitedmessageengine.constant.ProtocolConstant.First.SEND;
+import static com.message.unitedmessageengine.constant.ProtocolConstant.ProtocolType.*;
 import static com.message.unitedmessageengine.core.queue.QueueManager.RESULT_QUEUE;
-import static com.message.unitedmessageengine.core.socket.constant.ProtocolConstant.First.REPORT;
-import static com.message.unitedmessageengine.core.socket.constant.ProtocolConstant.First.SEND;
-import static com.message.unitedmessageengine.core.socket.constant.ProtocolConstant.ProtocolType.*;
 
 @Slf4j
 @Service
@@ -31,6 +30,7 @@ import static com.message.unitedmessageengine.core.socket.constant.ProtocolConst
 @Qualifier("firstChannelService")
 public class FirstChannelService implements ChannelService {
 
+    private final JdbcTemplate jdbcTemplate;
     @Qualifier("firstTranslator")
     private final FirstTranslator translator;
 
@@ -43,9 +43,10 @@ public class FirstChannelService implements ChannelService {
 
     public void authenticate(String channelType, SocketChannel channel) {
         try {
-            var connectVO = FirstConnectVo.builder().USERNAME(username).PASSWORD(password)
+            var connectVO = ConnectVo.builder().USERNAME(username).PASSWORD(password)
                     .LINE(channelType).VERSION(version).build();
-            var authPayload = translator.translateToExternalProtocol(CONNECT, connectVO);
+            var payload = translator.convertToBytes(connectVO);
+            var authPayload = translator.addTcpFraming(CONNECT, payload);
             if (authPayload.isEmpty()) return;
             var authBuffer = ByteBuffer.wrap(authPayload.get());
             channel.write(authBuffer);
@@ -56,13 +57,14 @@ public class FirstChannelService implements ChannelService {
 
     public void sendPing(SocketChannel senderChannel) {
         try {
-            var pingVO = new FirstPingVo();
-            var pingPayload = translator.translateToExternalProtocol(PING, pingVO);
+            var pingVO = new PingVo();
+            var payload = translator.convertToBytes(pingVO);
+            var pingPayload = translator.addTcpFraming(PING, payload);
             if (pingPayload.isEmpty()) return;
             var pingBuffer = ByteBuffer.wrap(pingPayload.get());
             senderChannel.write(pingBuffer);
         } catch (IOException e) {
-            log.warn("[PING] 처리 에러 발생 ::: message {}", e.getMessage());
+            log.warn("[PING] 처리 에러 발생 ::: messageEntity {}", e.getMessage());
             log.warn("", e);
         }
     }
@@ -85,14 +87,13 @@ public class FirstChannelService implements ChannelService {
                 checkAuth(SEND, mapData);
                 continue;
             }
-            if (mapData.get("CODE").equals("100")) return;
-            ACK_QUEUE.add(
-                    AckDto.builder()
-                            .messageId(mapData.get("KEY"))
-                            .resultCode(mapData.get("CODE"))
-                            .resultMessage(mapData.get("DATA"))
-                            .build()
-            );
+            if (mapData.getOrDefault("CODE", "100").equals("100")) return;
+
+            jdbcTemplate.update("""
+                            UPDATE MESSAGE SET STATUS_CODE=?, RESULT_CODE=?, RESULT_MESSAGE=? 
+                            where MESSAGE_ID=?
+                            """,
+                    "F", mapData.get("CODE"), mapData.get("DATA"), key);
 //            log.info("[ACK QUEUE] 메시지 결과 삽입 ::: messageId {}", key);
         }
     }
@@ -123,12 +124,12 @@ public class FirstChannelService implements ChannelService {
                             .resultMessage(mapData.get("DATA"))
                             .build()
             );
-
 //            log.info("[RESULT QUEUE] 메시지 결과 삽입 ::: messageId {}", key);
 //            resultRepository.updateMessageResult("C", mapData.get("CODE"), mapData.get("DATA"), key);
             try {
                 var reportAckVo = new ReportAckVo(key);
-                var reportAckPayload = translator.translateToExternalProtocol(ACK, reportAckVo);
+                var payload = translator.convertToBytes(reportAckVo);
+                var reportAckPayload = translator.addTcpFraming(ACK, payload);
                 if (reportAckPayload.isEmpty()) continue;
                 var reportAckBuffer = ByteBuffer.wrap(reportAckPayload.get());
                 reportChannel.write(reportAckBuffer);
@@ -141,11 +142,11 @@ public class FirstChannelService implements ChannelService {
 
     private void checkAuth(String channelType, Map<String, String> authData) {
         var code = authData.get("CODE");
-        var message = authData.get("DATA");
+        var messageEntity = authData.get("DATA");
         if (code.equals("100")) {
-            log.info("[{} Channel] 인증 완료 ::: code {}, message {}", channelType, code, message);
+            log.info("[{} Channel] 인증 완료 ::: code {}, messageEntity {}", channelType, code, messageEntity);
         } else {
-            throw new RuntimeException(String.format("[Channel] 인증 실패 ::: code %s, message %s", code, message));
+            throw new RuntimeException(String.format("[Channel] 인증 실패 ::: code %s, messageEntity %s", code, messageEntity));
         }
     }
 

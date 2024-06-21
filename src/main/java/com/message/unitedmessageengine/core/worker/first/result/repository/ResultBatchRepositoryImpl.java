@@ -1,7 +1,7 @@
-package com.message.unitedmessageengine.core.worker.result.repository;
+package com.message.unitedmessageengine.core.worker.first.result.repository;
 
-import com.message.unitedmessageengine.core.worker.result.dto.AckDto;
-import com.message.unitedmessageengine.core.worker.result.dto.ResultDto;
+import com.message.unitedmessageengine.core.worker.first.result.dto.AckDto;
+import com.message.unitedmessageengine.core.worker.first.result.dto.ResultDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;

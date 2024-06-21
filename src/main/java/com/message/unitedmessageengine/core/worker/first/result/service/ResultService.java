@@ -1,10 +1,10 @@
-package com.message.unitedmessageengine.core.worker.result.service;
+package com.message.unitedmessageengine.core.worker.first.result.service;
 
 import com.message.unitedmessageengine.core.socket.manager.first.FirstChannelManager;
 import com.message.unitedmessageengine.core.translator.first.FirstTranslator;
-import com.message.unitedmessageengine.core.worker.result.dto.AckDto;
-import com.message.unitedmessageengine.core.worker.result.dto.ResultDto;
-import com.message.unitedmessageengine.core.worker.result.repository.ResultRepository;
+import com.message.unitedmessageengine.core.worker.first.result.dto.AckDto;
+import com.message.unitedmessageengine.core.worker.first.result.dto.ResultDto;
+import com.message.unitedmessageengine.core.worker.first.result.repository.ResultRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
