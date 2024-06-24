@@ -47,7 +47,7 @@ public class MMSDummyInsert {
         for (MessageEntity message : dummyRepository.findAll()) {
             var imageEntity = ImageEntity.builder()
                     .imageName("mms.jpg")
-                    .imagePath("/Users/mz01-junghunee/Desktop/mms.jpg")
+                    .imagePath("/Users/mz01-junghunee/Desktop/mms2.jpg")
                     .message(message)
                     .build();
             imageEntityList.add(imageEntity);
@@ -81,7 +81,7 @@ public class MMSDummyInsert {
         for (MessageEntity message : dummyRepository.findAll()) {
             var imageEntity = ImageEntity.builder()
                     .imageName("mms.jpg")
-                    .imagePath("/Users/mz01-junghunee/Desktop/mms.jpg")
+                    .imagePath("/Users/mz01-junghunee/Desktop/mms2.jpg")
                     .message(message)
                     .build();
             imageEntityList.add(imageEntity);
@@ -116,7 +116,7 @@ public class MMSDummyInsert {
         for (MessageEntity message : dummyRepository.findAll()) {
             var imageEntity = ImageEntity.builder()
                     .imageName("mms.jpg")
-                    .imagePath("/Users/mz01-junghunee/Desktop/mms.jpg")
+                    .imagePath("/Users/mz01-junghunee/Desktop/mms2.jpg")
                     .message(message)
                     .build();
             imageEntityList.add(imageEntity);
@@ -153,7 +153,7 @@ public class MMSDummyInsert {
         for (MessageEntity message : dummyRepository.findAll()) {
             var imageEntity = ImageEntity.builder()
                     .imageName("mms.jpg")
-                    .imagePath("/Users/mz01-junghunee/Desktop/mms.jpg")
+                    .imagePath("/Users/mz01-junghunee/Desktop/mms2.jpg")
                     .message(message)
                     .build();
             imageEntityList.add(imageEntity);
