@@ -17,7 +17,6 @@ import java.nio.channels.SocketChannel;
 import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -55,7 +54,7 @@ public abstract class AbstractChannelManager<T extends ChannelService> {
         for (int i = 0; i < reportCnt; i++) connectReportChannel();
         performEventObserver();
         anomalyDetectionObserver = Executors.newSingleThreadScheduledExecutor();
-        anomalyDetectionObserver.scheduleAtFixedRate(this::monitoring, pingCycle, pingCycle, TimeUnit.MILLISECONDS);
+//        anomalyDetectionObserver.scheduleAtFixedRate(this::monitoring, pingCycle, pingCycle, TimeUnit.MILLISECONDS);
     }
 
     protected abstract void connectSendChannel();
@@ -68,10 +67,14 @@ public abstract class AbstractChannelManager<T extends ChannelService> {
         try {
             // SEND TCP CONNECT
             var channel = SocketChannel.open();
-            channel.socket().connect(new InetSocketAddress(host, port), connectTimeout);
             channel.socket().setSoTimeout(readTimeout);
+            channel.socket().setSendBufferSize(6 * 1024 * 1024);
+            channel.socket().setReceiveBufferSize(6 * 1024 * 1024);
+            channel.socket().connect(new InetSocketAddress(host, port), connectTimeout);
             channel.configureBlocking(false);
             channel.register(selector, SelectionKey.OP_READ);
+            log.info("[SOCKET CHANNEL] BUFFER SIZE ::: {}", channel.socket().getSendBufferSize());
+            log.info("[SOCKET CHANNEL] BUFFER SIZE ::: {}", channel.socket().getReceiveBufferSize());
             return channel;
         } catch (IOException e) {
             log.error("[SOCKET CHANNEL] Connect 에러 발생 ::: message {}, host {}, port {}", e.getMessage(), host, port);

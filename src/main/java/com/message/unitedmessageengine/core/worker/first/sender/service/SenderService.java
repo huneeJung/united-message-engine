@@ -6,7 +6,8 @@ import com.message.unitedmessageengine.core.translator.first.FirstImageTranslato
 import com.message.unitedmessageengine.core.translator.first.FirstTranslator;
 import com.message.unitedmessageengine.core.worker.first.sender.repository.SenderRepository;
 import com.message.unitedmessageengine.core.worker.first.sender.vo.ImageVo;
-import com.message.unitedmessageengine.core.worker.first.sender.vo.MessageVo;
+import com.message.unitedmessageengine.core.worker.first.sender.vo.MMSVo;
+import com.message.unitedmessageengine.core.worker.first.sender.vo.SMSVo;
 import com.message.unitedmessageengine.entity.MessageEntity;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +23,7 @@ import java.util.List;
 
 import static com.message.unitedmessageengine.constant.ProtocolConstant.ProtocolType;
 import static com.message.unitedmessageengine.constant.ProtocolConstant.ProtocolType.MMS;
+import static com.message.unitedmessageengine.constant.ProtocolConstant.ProtocolType.SMS;
 
 @Slf4j
 @Service
@@ -59,14 +61,15 @@ public class SenderService {
         for (MessageEntity messageEntity : fetchList) {
             try {
                 cnt++;
-                var messageVo = MessageVo.from(messageEntity);
+                var serviceType = messageEntity.getServiceType();
+                var messageVo = serviceType.equals(SMS.name()) ? SMSVo.from(messageEntity) : MMSVo.from(messageEntity);
                 var messagePayload = translator.convertToBytes(messageVo);
-                if (messageEntity.getServiceType().equals(MMS.name())) {
-                    if(messageEntity.getImageList().isEmpty()) {
-                        log.info("");
+                if (serviceType.equals(MMS.name())) {
+                    var imageList = messageEntity.getImageList();
+                    if (imageList == null || imageList.isEmpty()) {
+                        log.warn("[SENDER] 발송 실패 ::: MMS 이미지 정보 없음");
                         continue;
                     }
-                    var imageList = messageEntity.getImageList();
                     for (int i = 0; i < imageList.size(); i++) {
                         var imageDto = ImageVo.from(imageList.get(i));
                         var filePayload = fileTranslator.readFileImage(i + 1, imageDto);
@@ -79,6 +82,7 @@ public class SenderService {
                 // TODO :
                 if (tcpPayload.isEmpty()) continue;
                 var messageBuffer = ByteBuffer.wrap(tcpPayload.get());
+                log.info("length : {}", tcpPayload.get().length);
                 sendChannel.write(messageBuffer);
                 if (cnt > distributeCnt) {
                     index = Math.min(index + 1, sendChannelList.size() - 1);
@@ -90,7 +94,7 @@ public class SenderService {
                 log.error("", e);
                 continue;
             }
-            log.info("[SENDER] 발송 완료 ::: messageId {}", messageEntity.getMessageId());
+//            log.info("[SENDER] 발송 완료 ::: messageId {}", messageEntity.getMessageId());
         }
     }
 }
