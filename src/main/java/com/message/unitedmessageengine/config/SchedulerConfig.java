@@ -1,0 +1,28 @@
+package com.message.unitedmessageengine.config;
+
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.scheduling.annotation.SchedulingConfigurer;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
+import org.springframework.scheduling.config.ScheduledTaskRegistrar;
+
+@Slf4j
+@Configuration
+public class SchedulerConfig implements SchedulingConfigurer {
+
+    @Override
+    public void configureTasks(ScheduledTaskRegistrar taskRegistrar) {
+        ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
+
+        // 스케줄러 서비스 외에 별도의 쓰레드를 사용하는 처리가 없기 때문에, 가용 가능한 최대 CPU 코어 사이즈로 지정
+        scheduler.setPoolSize(4);
+        scheduler.setThreadNamePrefix("scheduled-task-");
+
+        // Graceful ShutDown
+        scheduler.setAwaitTerminationSeconds(30);
+        scheduler.setWaitForTasksToCompleteOnShutdown(true);
+
+        scheduler.initialize();
+        taskRegistrar.setTaskScheduler(scheduler);
+    }
+}

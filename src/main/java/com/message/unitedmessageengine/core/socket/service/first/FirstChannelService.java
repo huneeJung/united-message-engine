@@ -1,11 +1,12 @@
 package com.message.unitedmessageengine.core.socket.service.first;
 
+import com.message.unitedmessageengine.constant.FirstConstant.ProtocolType;
+import com.message.unitedmessageengine.core.socket.manager.AbstractChannelManager.ChannelType;
 import com.message.unitedmessageengine.core.socket.service.ChannelService;
 import com.message.unitedmessageengine.core.socket.vo.ConnectVo;
 import com.message.unitedmessageengine.core.socket.vo.PingVo;
 import com.message.unitedmessageengine.core.socket.vo.ReportAckVo;
 import com.message.unitedmessageengine.core.translator.first.FirstTranslator;
-import com.message.unitedmessageengine.core.worker.first.result.dto.ResultDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -19,10 +20,7 @@ import java.nio.channels.SocketChannel;
 import java.util.Map;
 import java.util.Queue;
 
-import static com.message.unitedmessageengine.constant.ProtocolConstant.First.REPORT;
-import static com.message.unitedmessageengine.constant.ProtocolConstant.First.SEND;
-import static com.message.unitedmessageengine.constant.ProtocolConstant.ProtocolType.*;
-import static com.message.unitedmessageengine.core.queue.QueueManager.RESULT_QUEUE;
+import static com.message.unitedmessageengine.constant.FirstConstant.ProtocolType.*;
 
 @Slf4j
 @Service
@@ -41,17 +39,18 @@ public class FirstChannelService implements ChannelService {
     @Value("${agentA.version}")
     private String version;
 
-    public void authenticate(String channelType, SocketChannel channel) {
+    public void authenticate(ChannelType type, SocketChannel channel) {
         try {
+            var line = type.equals(ChannelType.SEND) ? ProtocolType.SEND : ProtocolType.REPORT;
             var connectVO = ConnectVo.builder().USERNAME(username).PASSWORD(password)
-                    .LINE(channelType).VERSION(version).build();
+                    .LINE(line.name()).VERSION(version).build();
             var payload = translator.convertToBytes(connectVO);
             var authPayload = translator.addTcpFraming(CONNECT, payload);
             if (authPayload.isEmpty()) return;
             var authBuffer = ByteBuffer.wrap(authPayload.get());
             channel.write(authBuffer);
         } catch (IOException e) {
-            log.info("[{} Channel] 인증 에러 발생", channelType);
+            log.info("[{} Channel] 인증 에러 발생", type);
         }
     }
 
@@ -69,7 +68,7 @@ public class FirstChannelService implements ChannelService {
         }
     }
 
-    public void processSendResponse(Queue<String> dataQueue) {
+    public void processSendResponse(SocketChannel reportChannel, Queue<String> dataQueue) {
         while (!dataQueue.isEmpty()) {
             var data = dataQueue.poll();
             var mapDataOpt = translator.covertToMap(data);
@@ -84,7 +83,7 @@ public class FirstChannelService implements ChannelService {
             }
             // 인증 응답인 경우
             if (key == null) {
-                checkAuth(SEND, mapData);
+                checkAuth(SEND.name(), mapData);
                 continue;
             }
             if (mapData.getOrDefault("CODE", "100").equals("100")) return;
@@ -113,19 +112,27 @@ public class FirstChannelService implements ChannelService {
             }
             // 인증 응답인 경우
             if (key == null) {
-                checkAuth(REPORT, mapData);
+                checkAuth(REPORT.name(), mapData);
                 continue;
             }
 
-            RESULT_QUEUE.add(
-                    ResultDto.builder()
-                            .messageId(key)
-                            .resultCode(mapData.get("CODE"))
-                            .resultMessage(mapData.get("DATA"))
-                            .build()
-            );
+//            RESULT_QUEUE.add(
+//                    ResultDto.builder()
+//                            .messageId(key)
+//                            .resultCode(mapData.get("CODE"))
+//                            .resultMessage(mapData.get("DATA"))
+//                            .build()
+//            );
 //            log.info("[RESULT QUEUE] 메시지 결과 삽입 ::: messageId {}", key);
-//            resultRepository.updateMessageResult("C", mapData.get("CODE"), mapData.get("DATA"), key);
+
+            if (!reportChannel.isConnected()) return;
+            
+            jdbcTemplate.update("""
+                            UPDATE MESSAGE SET STATUS_CODE=?, RESULT_CODE=?, RESULT_MESSAGE=? 
+                            where MESSAGE_ID=?
+                            """,
+                    "C", mapData.get("CODE"), mapData.get("DATA"), key);
+
             try {
                 var reportAckVo = new ReportAckVo(key);
                 var payload = translator.convertToBytes(reportAckVo);

@@ -18,12 +18,11 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.util.List;
 
-import static com.message.unitedmessageengine.constant.ProtocolConstant.ProtocolType;
-import static com.message.unitedmessageengine.constant.ProtocolConstant.ProtocolType.MMS;
-import static com.message.unitedmessageengine.constant.ProtocolConstant.ProtocolType.SMS;
+import static com.message.unitedmessageengine.constant.FirstConstant.ProtocolType;
+import static com.message.unitedmessageengine.constant.FirstConstant.ProtocolType.MMS;
+import static com.message.unitedmessageengine.constant.FirstConstant.ProtocolType.SMS;
 
 @Slf4j
 @Service
@@ -39,28 +38,18 @@ public class SenderService {
     private final FirstChannelManager channelManager;
     private final SenderRepository senderRepository;
 
+    @Transactional
     public List<MessageEntity> findAllMessages(String serviceDivision, Integer fetchCount) {
-        return senderRepository.findByStatusCodeAndServiceDivision("W", serviceDivision, PageRequest.of(0, fetchCount));
+        var fetchList = senderRepository.findByStatusCodeAndServiceDivision("W", serviceDivision, PageRequest.of(0, fetchCount));
+        senderRepository.batchUpdate(fetchList);
+        return fetchList;
     }
 
     @Transactional
     public void send(List<MessageEntity> fetchList) {
-        senderRepository.batchUpdate(fetchList);
 
-        var sendChannelList = channelManager.getSendChannelList();
-        if (sendChannelList.isEmpty()) {
-            log.warn("[SENDER] 발송 가능 채널 없음");
-            throw new RuntimeException("[SENDER] 발송 가능 채널 없음");
-        }
-
-        var distributeCnt = fetchList.size() / sendChannelList.size();
-
-        var cnt = 0;
-        var index = 0;
-        var sendChannel = sendChannelList.get(index);
         for (MessageEntity messageEntity : fetchList) {
             try {
-                cnt++;
                 var serviceType = messageEntity.getServiceType();
                 var messageVo = serviceType.equals(SMS.name()) ? SMSVo.from(messageEntity) : MMSVo.from(messageEntity);
                 var messagePayload = translator.convertToBytes(messageVo);
@@ -79,22 +68,17 @@ public class SenderService {
                 var tcpPayload = translator.addTcpFraming(
                         ProtocolType.valueOf(messageEntity.getServiceType()), messagePayload
                 );
-                // TODO :
-                if (tcpPayload.isEmpty()) continue;
-                var messageBuffer = ByteBuffer.wrap(tcpPayload.get());
-                log.info("length : {}", tcpPayload.get().length);
-                sendChannel.write(messageBuffer);
-                if (cnt > distributeCnt) {
-                    index = Math.min(index + 1, sendChannelList.size() - 1);
-                    sendChannel = sendChannelList.get(index);
-                    cnt = 0;
+                if (tcpPayload.isEmpty()) {
+                    log.warn("[SENDER] 내용 전문 NULL");
+                    continue;
                 }
+                channelManager.write(tcpPayload.get());
             } catch (IOException e) {
+                messageEntity.setStatusCode("W");
                 log.error("[SENDER] 발송 실패 ::: messageId {}", messageEntity.getMessageId());
                 log.error("", e);
-                continue;
             }
-//            log.info("[SENDER] 발송 완료 ::: messageId {}", messageEntity.getMessageId());
         }
     }
+
 }

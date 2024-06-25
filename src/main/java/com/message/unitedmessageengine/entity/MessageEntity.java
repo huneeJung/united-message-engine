@@ -14,7 +14,8 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "MESSAGE", indexes = {
-        @Index(name = "idx_messageid", columnList = "MESSAGE_ID")
+        @Index(name = "idx_messageId", columnList = "MESSAGE_ID"),
+        @Index(name = "idx_statusCode", columnList = "STATUS_CODE,SERVICE_DIVISION")
 })
 public class MessageEntity {
 
