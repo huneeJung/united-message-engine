@@ -12,11 +12,13 @@ import lombok.Setter;
 @AllArgsConstructor
 public class ImageVo {
 
+    private final Long imageId;
     private final String fileName;
     private final String filePath;
 
     public static ImageVo from(ImageEntity imageEntity) {
         return ImageVo.builder()
+                .imageId(imageEntity.getImageId())
                 .fileName(imageEntity.getImageName())
                 .filePath(imageEntity.getImagePath())
                 .build();

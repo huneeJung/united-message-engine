@@ -13,7 +13,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayDeque;
 import java.util.Queue;
 
-import static com.message.unitedmessageengine.constant.ProtocolConstant.First.*;
+import static com.message.unitedmessageengine.constant.FirstConstant.CHARSET;
+import static com.message.unitedmessageengine.constant.FirstConstant.PROTOCOL_PREFIX;
 
 @Slf4j
 @Component
@@ -23,18 +24,6 @@ public class FirstChannelManager extends AbstractChannelManager<ChannelService> 
     @Autowired
     public FirstChannelManager(ChannelService channelService) {
         super(channelService);
-    }
-
-    protected void connectSendChannel() {
-        var sendChannel = tcpConnect();
-        socketChannelService.authenticate(SEND, sendChannel);
-        sendChannelSet.add(sendChannel);
-    }
-
-    protected void connectReportChannel() {
-        var reportChannel = tcpConnect();
-        socketChannelService.authenticate(REPORT, reportChannel);
-        reportChannelSet.add(reportChannel);
     }
 
     protected Queue<String> parsePayload(ByteBuffer buffer, byte[] payload) {

@@ -6,7 +6,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
-import static com.message.unitedmessageengine.constant.ProtocolConstant.First.CONVERT_TYPE;
+import static com.message.unitedmessageengine.constant.FirstConstant.CONVERT_TYPE;
 
 @Getter
 @Setter

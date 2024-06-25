@@ -1,7 +1,7 @@
 package com.message.unitedmessageengine.core.translator.first;
 
 import com.google.common.primitives.Bytes;
-import com.message.unitedmessageengine.constant.ProtocolConstant.ProtocolType;
+import com.message.unitedmessageengine.constant.FirstConstant.*;
 import com.message.unitedmessageengine.core.translator.Translator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,7 +18,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.StringTokenizer;
 
-import static com.message.unitedmessageengine.constant.ProtocolConstant.First.*;
+import static com.message.unitedmessageengine.constant.FirstConstant.*;
 
 @Slf4j
 @Component

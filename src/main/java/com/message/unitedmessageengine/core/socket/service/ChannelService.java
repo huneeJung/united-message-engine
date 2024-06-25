@@ -1,21 +1,21 @@
 package com.message.unitedmessageengine.core.socket.service;
 
+import com.message.unitedmessageengine.core.socket.manager.AbstractChannelManager.ChannelType;
 import org.springframework.scheduling.annotation.Async;
 
-import java.io.IOException;
 import java.nio.channels.SocketChannel;
 import java.util.Queue;
 
 public interface ChannelService {
 
-    void authenticate(String line, SocketChannel channel);
+    void authenticate(ChannelType line, SocketChannel channel);
 
     void sendPing(SocketChannel channel);
 
     @Async
-    void processSendResponse(Queue<String> ackBytes) throws IOException;
+    void processSendResponse(SocketChannel reportChannel, Queue<String> ackBytes);
 
     @Async
-    void processReportResponse(SocketChannel reportChannel, Queue<String> resultBytes) throws IOException;
+    void processReportResponse(SocketChannel reportChannel, Queue<String> resultBytes);
 
 }

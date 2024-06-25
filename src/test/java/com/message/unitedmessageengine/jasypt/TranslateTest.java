@@ -11,7 +11,7 @@ import org.springframework.util.Assert;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.Field;
 
-import static com.message.unitedmessageengine.constant.ProtocolConstant.First.CHARSET;
+import static com.message.unitedmessageengine.constant.FirstConstant.CHARSET;
 
 @SpringJUnitConfig
 class TranslateTest {
