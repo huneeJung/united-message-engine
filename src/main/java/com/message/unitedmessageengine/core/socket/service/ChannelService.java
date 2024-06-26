@@ -10,7 +10,7 @@ public interface ChannelService {
 
     void authenticate(ChannelType line, SocketChannel channel);
 
-    void sendPing(SocketChannel channel);
+    void writePing(SocketChannel channel);
 
     @Async
     void processSendResponse(SocketChannel reportChannel, Queue<String> ackBytes);

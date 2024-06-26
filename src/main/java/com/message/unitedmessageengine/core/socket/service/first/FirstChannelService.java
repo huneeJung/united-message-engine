@@ -19,6 +19,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.util.Map;
 import java.util.Queue;
+import java.util.concurrent.Executors;
 
 import static com.message.unitedmessageengine.constant.FirstConstant.ProtocolType.*;
 
@@ -31,6 +32,10 @@ public class FirstChannelService implements ChannelService {
     private final JdbcTemplate jdbcTemplate;
     @Qualifier("firstTranslator")
     private final FirstTranslator translator;
+    private final String statusUpdateSql = """
+            UPDATE MESSAGE SET STATUS_CODE=?, RESULT_CODE=?, RESULT_MESSAGE=? 
+            where MESSAGE_ID=?
+            """;
 
     @Value("${agentA.connect.username}")
     private String username;
@@ -54,7 +59,7 @@ public class FirstChannelService implements ChannelService {
         }
     }
 
-    public void sendPing(SocketChannel senderChannel) {
+    public void writePing(SocketChannel senderChannel) {
         try {
             var pingVO = new PingVo();
             var payload = translator.convertToBytes(pingVO);
@@ -63,7 +68,7 @@ public class FirstChannelService implements ChannelService {
             var pingBuffer = ByteBuffer.wrap(pingPayload.get());
             senderChannel.write(pingBuffer);
         } catch (IOException e) {
-            log.warn("[PING] 처리 에러 발생 ::: messageEntity {}", e.getMessage());
+            log.warn("[PING] 처리 에러 발생 ::: message {}", e.getMessage());
             log.warn("", e);
         }
     }
@@ -88,11 +93,7 @@ public class FirstChannelService implements ChannelService {
             }
             if (mapData.getOrDefault("CODE", "100").equals("100")) return;
 
-            jdbcTemplate.update("""
-                            UPDATE MESSAGE SET STATUS_CODE=?, RESULT_CODE=?, RESULT_MESSAGE=? 
-                            where MESSAGE_ID=?
-                            """,
-                    "F", mapData.get("CODE"), mapData.get("DATA"), key);
+            jdbcTemplate.update(statusUpdateSql, "F", mapData.get("CODE"), mapData.get("DATA"), key);
 //            log.info("[ACK QUEUE] 메시지 결과 삽입 ::: messageId {}", key);
         }
     }
@@ -115,7 +116,6 @@ public class FirstChannelService implements ChannelService {
                 checkAuth(REPORT.name(), mapData);
                 continue;
             }
-
 //            RESULT_QUEUE.add(
 //                    ResultDto.builder()
 //                            .messageId(key)
@@ -126,23 +126,23 @@ public class FirstChannelService implements ChannelService {
 //            log.info("[RESULT QUEUE] 메시지 결과 삽입 ::: messageId {}", key);
 
             if (!reportChannel.isConnected()) return;
-            
-            jdbcTemplate.update("""
-                            UPDATE MESSAGE SET STATUS_CODE=?, RESULT_CODE=?, RESULT_MESSAGE=? 
-                            where MESSAGE_ID=?
-                            """,
-                    "C", mapData.get("CODE"), mapData.get("DATA"), key);
 
-            try {
-                var reportAckVo = new ReportAckVo(key);
-                var payload = translator.convertToBytes(reportAckVo);
-                var reportAckPayload = translator.addTcpFraming(ACK, payload);
-                if (reportAckPayload.isEmpty()) continue;
-                var reportAckBuffer = ByteBuffer.wrap(reportAckPayload.get());
-                reportChannel.write(reportAckBuffer);
-//                log.info("[REPORT CHANNEL] 결과 수신 응답 성공 ::: messageId {}", key);
-            } catch (IOException e) {
-                log.info("[REPORT CHANNEL] 결과 수신 응답 실패 ::: messageId {}", key);
+            try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+                executor.submit(() -> {
+                    jdbcTemplate.update(statusUpdateSql, "C", mapData.get("CODE"), mapData.get("DATA"), key);
+                    try {
+                        var reportAckVo = new ReportAckVo(key);
+                        var payload = translator.convertToBytes(reportAckVo);
+                        var reportAckPayload = translator.addTcpFraming(ACK, payload);
+                        if (reportAckPayload.isEmpty()) return;
+                        var reportAckBuffer = ByteBuffer.wrap(reportAckPayload.get());
+                        reportChannel.write(reportAckBuffer);
+//                        log.info("[REPORT CHANNEL] 결과 수신 응답 성공 ::: messageId {}", key);
+                    } catch (
+                            IOException e) {
+                        log.info("[REPORT CHANNEL] 결과 수신 응답 실패 ::: messageId {}", key);
+                    }
+                });
             }
         }
     }

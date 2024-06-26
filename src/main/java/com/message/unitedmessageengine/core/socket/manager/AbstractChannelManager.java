@@ -80,8 +80,8 @@ public abstract class AbstractChannelManager<T extends ChannelService> {
             // SEND TCP CONNECT
             var channel = SocketChannel.open();
             channel.socket().setSoTimeout(readTimeout);
-            channel.socket().setSendBufferSize(2 * 1024 * 1024);
-            channel.socket().setReceiveBufferSize(2 * 1024 * 1024);
+            channel.socket().setSendBufferSize(1024 * 1024);
+            channel.socket().setReceiveBufferSize(1024 * 1024);
             channel.socket().connect(new InetSocketAddress(host, port), connectTimeout);
             channel.configureBlocking(false);
             socketChannelService.authenticate(type, channel);
@@ -101,19 +101,30 @@ public abstract class AbstractChannelManager<T extends ChannelService> {
     }
 
     // 네트워크 IO 속도보다 CPU 처리 속도가 빠르므로, 비동기로 처리할 이유가 없음
-    // 지속적으로 소켓 채널에 할당된 커널 버퍼를 확인하며, 해당 버퍼에 데이터를 쌓는 역할이 더 속도가 빠르며 불필요한 비동기 처리도 줄어듬
+    // 하지만 부하가 크지 않은 선에서 가상 쓰레드로써 비동기로 write 처리해주면 소켓 채널의 일정량의 버퍼 데이터로 계속해서 유지할 수 있게 됨
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void write(byte[] payload) throws IOException {
+    public void write(byte[] payload) throws Exception {
+        log.info("{}", new String(payload));
         while (true) {
             if (mainSendChannelQueue.isEmpty()) continue;
             var mainSendChannel = mainSendChannelQueue.poll();
             var sendChannel = mainSendChannel.getSocketChannel();
-            if (!sendChannel.isConnected()) continue;
+            if (!sendChannel.isConnected()) {
+                throw new Exception("[MAIN CHANNEL] 연결 끊김");
+            }
             var sendBuffer = ByteBuffer.wrap(payload);
-            var cnt = 0;
-            while (cnt < payload.length) cnt += sendChannel.write(sendBuffer);
-            mainSendChannel.setLastUsedTime(Instant.now());
-            mainSendChannelQueue.add(mainSendChannel);
+            try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+                executor.submit(() -> {
+                    try {
+                        var cnt = 0;
+                        while (cnt < payload.length) cnt += sendChannel.write(sendBuffer);
+                        mainSendChannel.setLastUsedTime(Instant.now());
+                        mainSendChannelQueue.add(mainSendChannel);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                });
+            }
             return;
         }
     }
@@ -147,6 +158,7 @@ public abstract class AbstractChannelManager<T extends ChannelService> {
                                 key.cancel();
                                 channel.close();
                                 log.warn("[{} Channel] Read Event 처리중 발생 ::: message {}", type, e.getMessage());
+                                log.warn("", e);
                             }
                         }
                     }
@@ -201,8 +213,8 @@ public abstract class AbstractChannelManager<T extends ChannelService> {
                 log.warn("[REPORT CHANNEL] Reconnect 수행 ::: host {} , port {}", host, port);
             }
         } else {
-            sendChannelSet.forEach(socketChannelService::sendPing);
-            reportChannelSet.forEach(socketChannelService::sendPing);
+            sendChannelSet.forEach(socketChannelService::writePing);
+            reportChannelSet.forEach(socketChannelService::writePing);
         }
     }
 

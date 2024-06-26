@@ -28,7 +28,7 @@ public class WorkerScheduler {
     @Scheduled(initialDelayString = "1000", fixedDelayString = "1")
     public void sendMessageFromQueue() {
         if (useYN.equals("N")) return;
-        
+
         var start = Instant.now();
         var fetchList = senderService.findAllMessages("SLM", fetchCount);
         if (fetchList.isEmpty()) return;

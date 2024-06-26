@@ -17,7 +17,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.IOException;
 import java.util.List;
 
 import static com.message.unitedmessageengine.constant.FirstConstant.ProtocolType;
@@ -47,7 +46,6 @@ public class SenderService {
 
     @Transactional
     public void send(List<MessageEntity> fetchList) {
-
         for (MessageEntity messageEntity : fetchList) {
             try {
                 var serviceType = messageEntity.getServiceType();
@@ -73,9 +71,9 @@ public class SenderService {
                     continue;
                 }
                 channelManager.write(tcpPayload.get());
-            } catch (IOException e) {
+            } catch (Exception e) {
                 messageEntity.setStatusCode("W");
-                log.error("[SENDER] 발송 실패 ::: messageId {}", messageEntity.getMessageId());
+                log.error("[SENDER] 발송 보류 ::: messageId {}", messageEntity.getMessageId());
                 log.error("", e);
             }
         }
