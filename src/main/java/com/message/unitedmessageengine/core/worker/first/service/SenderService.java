@@ -41,7 +41,7 @@ public class SenderService {
 
     @Transactional
     public void findAllMessages(ArrayBlockingQueue<MessageEntity> selectMessageQueue, String serviceDivision, Integer fetchCount) {
-        var resultList = senderRepository.findByStatusCodeAndServiceDivision("W", serviceDivision, PageRequest.of(0, fetchCount));
+        var resultList = senderRepository.findByStatusCodeAndServiceDivisionOrderBySendDttAsc("W", serviceDivision, PageRequest.of(0, fetchCount));
         senderRepository.batchUpdate(resultList);
         selectMessageQueue.addAll(resultList);
     }

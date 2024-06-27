@@ -8,7 +8,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -27,32 +26,24 @@ public class WorkerScheduler {
     private String useYN;
     @Value("${worker.fetch-count:2000}")
     private Integer fetchCount;
-    @Value("${queue.fetch-size-limit:10000}")
-    private Integer fetchSizeLimit;
+
+    //TODO 레디스 캐시로 구현하는 것이 더 안정적인 방식같아보임
     private ArrayBlockingQueue<MessageEntity> fetchMessageQueue;
 
     @PostConstruct
     public void init() {
-        fetchMessageQueue = new ArrayBlockingQueue<>(fetchSizeLimit);
+        fetchMessageQueue = new ArrayBlockingQueue<>(fetchCount);
     }
 
     @SchedulerLock(name = "fetch_lock")
     @Scheduled(initialDelayString = "1000", fixedDelayString = "1000")
     public void selectMessage() {
         if (useYN.equals("N")) return;
-        if (fetchMessageQueue.size() + fetchCount > 10000) return;
-        log.info("[FETCHER] 패치 처리 시작 ::: messageListSize {}", fetchMessageQueue.size());
-
-        var start = Instant.now();
+        if (!fetchMessageQueue.isEmpty()) return;
         senderService.findAllMessages(fetchMessageQueue, "SLM", fetchCount);
-        var end = Instant.now();
-
-        log.info("[FETCHER] 패치 처리 종료 ::: messageListSize {}, WORKING_TIME {}ms,",
-                fetchMessageQueue.size(), Duration.between(start, end).toMillis());
     }
 
-    @Async
-    @Scheduled(initialDelayString = "1000", fixedDelayString = "2000")
+    @Scheduled(initialDelayString = "1000", fixedDelayString = "1000")
     public void sendMessage() {
         if (useYN.equals("N")) return;
         if (fetchMessageQueue.isEmpty()) return;
@@ -72,7 +63,8 @@ public class WorkerScheduler {
                 fetchMessageQueue.size(), Duration.between(start, end).toMillis());
     }
 
-    @Scheduled(initialDelayString = "1000", fixedDelayString = "900000")
+    @SchedulerLock(name = "anomaly_lock")
+    @Scheduled(initialDelayString = "900000", fixedDelayString = "900000")
     public void resendAnomalyMessage() {
         if (useYN.equals("N")) return;
         log.info("[DETECTOR] 이상 메시지 재처리 시작 ::: messageListSize {}", fetchMessageQueue.size());
