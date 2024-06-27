@@ -1,7 +1,7 @@
 package com.message.unitedmessageengine.core.translator.first;
 
 import com.google.common.cache.Cache;
-import com.message.unitedmessageengine.core.worker.first.sender.vo.ImageVo;
+import com.message.unitedmessageengine.core.worker.first.vo.ImageVo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;

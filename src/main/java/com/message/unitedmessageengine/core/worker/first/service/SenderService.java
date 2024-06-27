@@ -1,13 +1,13 @@
-package com.message.unitedmessageengine.core.worker.first.sender.service;
+package com.message.unitedmessageengine.core.worker.first.service;
 
 import com.google.common.primitives.Bytes;
 import com.message.unitedmessageengine.core.socket.manager.first.FirstChannelManager;
 import com.message.unitedmessageengine.core.translator.first.FirstImageTranslator;
 import com.message.unitedmessageengine.core.translator.first.FirstTranslator;
-import com.message.unitedmessageengine.core.worker.first.sender.repository.SenderRepository;
-import com.message.unitedmessageengine.core.worker.first.sender.vo.ImageVo;
-import com.message.unitedmessageengine.core.worker.first.sender.vo.MMSVo;
-import com.message.unitedmessageengine.core.worker.first.sender.vo.SMSVo;
+import com.message.unitedmessageengine.core.worker.first.repository.SenderRepository;
+import com.message.unitedmessageengine.core.worker.first.vo.ImageVo;
+import com.message.unitedmessageengine.core.worker.first.vo.MMSVo;
+import com.message.unitedmessageengine.core.worker.first.vo.SMSVo;
 import com.message.unitedmessageengine.entity.MessageEntity;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,7 +17,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
+import java.time.LocalDateTime;
+import java.util.Queue;
+import java.util.concurrent.ArrayBlockingQueue;
 
 import static com.message.unitedmessageengine.constant.FirstConstant.ProtocolType;
 import static com.message.unitedmessageengine.constant.FirstConstant.ProtocolType.MMS;
@@ -38,15 +40,24 @@ public class SenderService {
     private final SenderRepository senderRepository;
 
     @Transactional
-    public List<MessageEntity> findAllMessages(String serviceDivision, Integer fetchCount) {
-        var fetchList = senderRepository.findByStatusCodeAndServiceDivision("W", serviceDivision, PageRequest.of(0, fetchCount));
-        senderRepository.batchUpdate(fetchList);
-        return fetchList;
+    public void findAllMessages(ArrayBlockingQueue<MessageEntity> selectMessageQueue, String serviceDivision, Integer fetchCount) {
+        var resultList = senderRepository.findByStatusCodeAndServiceDivision("W", serviceDivision, PageRequest.of(0, fetchCount));
+        senderRepository.batchUpdate(resultList);
+        selectMessageQueue.addAll(resultList);
     }
 
     @Transactional
-    public void send(List<MessageEntity> fetchList) {
-        for (MessageEntity messageEntity : fetchList) {
+    public void updateAnomalyMessages() {
+        var resultList = senderRepository.findByStatusCodeAndResultCodeIsNullAndSendDttBefore("P", LocalDateTime.now().minusHours(1));
+        for (MessageEntity message : resultList) {
+            message.setStatusCode("W");
+        }
+    }
+
+    @Transactional
+    public void send(Queue<MessageEntity> fetchQueue) {
+        while (!fetchQueue.isEmpty()) {
+            var messageEntity = fetchQueue.poll();
             try {
                 var serviceType = messageEntity.getServiceType();
                 var messageVo = serviceType.equals(SMS.name()) ? SMSVo.from(messageEntity) : MMSVo.from(messageEntity);
