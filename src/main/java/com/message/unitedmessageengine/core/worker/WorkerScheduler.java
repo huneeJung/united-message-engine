@@ -26,6 +26,8 @@ public class WorkerScheduler {
     private String useYN;
     @Value("${worker.fetch-count:2000}")
     private Integer fetchCount;
+
+    //TODO 레디스 캐시로 구현하는 것이 더 안정적인 방식같아보임
     private ArrayBlockingQueue<MessageEntity> fetchMessageQueue;
 
     @PostConstruct
