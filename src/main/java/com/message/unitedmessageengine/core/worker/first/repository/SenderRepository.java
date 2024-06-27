@@ -21,7 +21,7 @@ public interface SenderRepository extends JpaRepository<MessageEntity, Long>, Se
 //            """)
 //    List<SMSDto> findAllMessages(@Param("serviceDivision") String serviceDivision, Pageable pageable);
 
-    List<MessageEntity> findByStatusCodeAndServiceDivision(String statusCode, String serviceDivision, Pageable pageable);
+    List<MessageEntity> findByStatusCodeAndServiceDivisionOrderBySendDttAsc(String statusCode, String serviceDivision, Pageable pageable);
 
     List<MessageEntity> findByStatusCodeAndResultCodeIsNullAndSendDttBefore(String statusCode, LocalDateTime sendDttBefore);
 

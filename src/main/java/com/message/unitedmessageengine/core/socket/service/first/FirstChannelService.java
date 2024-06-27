@@ -34,7 +34,7 @@ public class FirstChannelService implements ChannelService {
     private final FirstTranslator translator;
     private final String statusUpdateSql = """
             UPDATE MESSAGE SET STATUS_CODE=?, RESULT_CODE=?, RESULT_MESSAGE=? 
-            where MESSAGE_ID=?
+            where MESSAGE_ID=? AND STATUS_CODE!='C'
             """;
 
     @Value("${agentA.connect.username}")

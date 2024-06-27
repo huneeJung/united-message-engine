@@ -80,8 +80,8 @@ public abstract class AbstractChannelManager<T extends ChannelService> {
             // SEND TCP CONNECT
             var channel = SocketChannel.open();
             channel.socket().setSoTimeout(readTimeout);
-            channel.socket().setSendBufferSize(512 * 1024);
-            channel.socket().setReceiveBufferSize(512 * 1024);
+            channel.socket().setSendBufferSize(1024 * 1024);
+            channel.socket().setReceiveBufferSize(1024 * 1024);
             channel.socket().connect(new InetSocketAddress(host, port), connectTimeout);
             channel.configureBlocking(false);
             socketChannelService.authenticate(type, channel);
