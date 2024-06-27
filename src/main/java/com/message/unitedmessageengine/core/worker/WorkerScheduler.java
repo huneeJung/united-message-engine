@@ -4,6 +4,7 @@ package com.message.unitedmessageengine.core.worker;
 import com.message.unitedmessageengine.core.worker.first.sender.service.SenderService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -23,9 +24,9 @@ public class WorkerScheduler {
 
     @Value("${worker.fetch-count:1000}")
     private Integer fetchCount;
-
-    //    @Async
+    
     @Scheduled(initialDelayString = "1000", fixedDelayString = "1")
+    @SchedulerLock(name = "send_lock", lockAtLeastFor = "PT1S", lockAtMostFor = "PT1H")
     public void sendMessageFromQueue() {
         if (useYN.equals("N")) return;
 

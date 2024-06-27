@@ -104,7 +104,6 @@ public abstract class AbstractChannelManager<T extends ChannelService> {
     // 하지만 부하가 크지 않은 선에서 가상 쓰레드로써 비동기로 write 처리해주면 소켓 채널의 일정량의 버퍼 데이터로 계속해서 유지할 수 있게 됨
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void write(byte[] payload) throws Exception {
-        log.info("{}", new String(payload));
         while (true) {
             if (mainSendChannelQueue.isEmpty()) continue;
             var mainSendChannel = mainSendChannelQueue.poll();
@@ -112,10 +111,10 @@ public abstract class AbstractChannelManager<T extends ChannelService> {
             if (!sendChannel.isConnected()) {
                 throw new Exception("[MAIN CHANNEL] 연결 끊김");
             }
-            var sendBuffer = ByteBuffer.wrap(payload);
             try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
                 executor.submit(() -> {
                     try {
+                        var sendBuffer = ByteBuffer.wrap(payload);
                         var cnt = 0;
                         while (cnt < payload.length) cnt += sendChannel.write(sendBuffer);
                         mainSendChannel.setLastUsedTime(Instant.now());

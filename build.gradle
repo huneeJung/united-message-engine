@@ -34,6 +34,10 @@ dependencies {
 //    implementation 'org.springframework.boot:spring-boot-starter-batch'
 //    testImplementation 'org.springframework.boot:spring-boot-starter-test'
 
+    // Shedlock
+    implementation 'net.javacrumbs.shedlock:shedlock-spring:5.13.0'
+    implementation 'net.javacrumbs.shedlock:shedlock-provider-jdbc-template:5.13.0'
+
     // util
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
