@@ -3,6 +3,7 @@ package com.message.unitedmessageengine;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.javacrumbs.shedlock.spring.annotation.EnableSchedulerLock;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.core.env.Environment;
@@ -19,6 +20,7 @@ import java.util.TimeZone;
 @EnableJpaAuditing
 @SpringBootApplication
 @RequiredArgsConstructor
+@EnableSchedulerLock(defaultLockAtMostFor = "PT1H")
 public class UnitedMessageEngineApplication {
 
     private final Environment env;
