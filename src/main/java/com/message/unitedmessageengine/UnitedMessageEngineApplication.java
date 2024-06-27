@@ -20,7 +20,7 @@ import java.util.TimeZone;
 @EnableJpaAuditing
 @SpringBootApplication
 @RequiredArgsConstructor
-@EnableSchedulerLock(defaultLockAtMostFor = "PT1H")
+@EnableSchedulerLock(defaultLockAtMostFor = "PT1S")
 public class UnitedMessageEngineApplication {
 
     private final Environment env;

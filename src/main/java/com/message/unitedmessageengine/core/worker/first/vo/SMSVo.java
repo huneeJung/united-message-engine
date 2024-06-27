@@ -1,4 +1,4 @@
-package com.message.unitedmessageengine.core.worker.first.sender.vo;
+package com.message.unitedmessageengine.core.worker.first.vo;
 
 import com.message.unitedmessageengine.entity.MessageEntity;
 import lombok.AllArgsConstructor;

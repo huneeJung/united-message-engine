@@ -91,9 +91,11 @@ public class FirstChannelService implements ChannelService {
                 checkAuth(SEND.name(), mapData);
                 continue;
             }
-            if (mapData.getOrDefault("CODE", "100").equals("100")) return;
 
-            jdbcTemplate.update(statusUpdateSql, "F", mapData.get("CODE"), mapData.get("DATA"), key);
+            var statusCode = "";
+            if (mapData.getOrDefault("CODE", "100").equals("100")) statusCode = "P";
+            else statusCode = "F";
+            jdbcTemplate.update(statusUpdateSql, statusCode, mapData.get("CODE"), mapData.get("DATA"), key);
 //            log.info("[ACK QUEUE] 메시지 결과 삽입 ::: messageId {}", key);
         }
     }

@@ -20,7 +20,7 @@ public class SchedulerConfig implements SchedulingConfigurer {
         ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
 
         // 스케줄러 서비스 외에 별도의 쓰레드를 사용하는 처리가 없기 때문에, 가용 가능한 최대 CPU 코어 사이즈로 지정
-        scheduler.setPoolSize(2);
+        scheduler.setPoolSize(4);
         scheduler.setThreadNamePrefix("scheduled-task-");
 
         // Graceful ShutDown
