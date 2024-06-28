@@ -1,6 +1,6 @@
 package com.message.unitedmessageengine.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -25,7 +25,7 @@ public class ImageEntity {
     private String imagePath;
 
     @ManyToOne
-    @JsonIgnoreProperties
+    @JsonBackReference
     @JoinColumn(name = "ID")
     private MessageEntity message;
 

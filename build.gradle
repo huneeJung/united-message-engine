@@ -30,11 +30,17 @@ dependencies {
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
     implementation 'org.springframework:spring-beans'
 
+    // redis : 메시지 큐로 사용하려고 했으나, 하나의 큐네임을 하나의 소비자만 구독할 수 있어 스케일 상황에서 문제가 발생할 수 있음 -> 카프카로 변경
+//    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+
+    // kafka
+    implementation 'org.springframework.kafka:spring-kafka'
+
     // batch
 //    implementation 'org.springframework.boot:spring-boot-starter-batch'
 //    testImplementation 'org.springframework.boot:spring-boot-starter-test'
 
-    // Shedlock
+    // shedlock
     implementation 'net.javacrumbs.shedlock:shedlock-spring:5.13.0'
     implementation 'net.javacrumbs.shedlock:shedlock-provider-jdbc-template:5.13.0'
 

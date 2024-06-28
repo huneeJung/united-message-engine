@@ -47,7 +47,7 @@ public abstract class AbstractChannelManager<T extends ChannelService> {
     protected Selector reportSelector;
     private boolean isAliveSendSelector;
     private boolean isAliveReportSelector;
-    private ScheduledExecutorService anomalyDetectionObserver;
+    private ScheduledExecutorService anomalyMonitor;
     @Value("${tcp.connect-timeout}")
     private Integer connectTimeout;
     @Value("${tcp.read-timeout:5000}")
@@ -69,8 +69,8 @@ public abstract class AbstractChannelManager<T extends ChannelService> {
         for (int i = 0; i < reportCnt; i++) tcpConnect(REPORT);
         detectSelectorEvent(SEND);
         detectSelectorEvent(REPORT);
-        anomalyDetectionObserver = Executors.newSingleThreadScheduledExecutor();
-        anomalyDetectionObserver.scheduleAtFixedRate(this::detectAnomaly, pingCycle, pingCycle, TimeUnit.MILLISECONDS);
+        anomalyMonitor = Executors.newSingleThreadScheduledExecutor();
+        anomalyMonitor.scheduleAtFixedRate(this::monitoring, pingCycle, pingCycle, TimeUnit.MILLISECONDS);
     }
 
     protected abstract Queue<String> parsePayload(ByteBuffer buffer, byte[] data);
@@ -191,7 +191,7 @@ public abstract class AbstractChannelManager<T extends ChannelService> {
         return parsePayload(reportBuffer, bytes);
     }
 
-    private void detectAnomaly() {
+    private void monitoring() {
         if (!isAliveSendSelector) {
             log.warn("[SEND SELECTOR] 이상 감지 Regenerate 수행 ::: isAliveSelector {}", isAliveSendSelector);
             isAliveSendSelector = true;
@@ -219,7 +219,7 @@ public abstract class AbstractChannelManager<T extends ChannelService> {
 
     @PreDestroy
     public void destroy() throws IOException {
-        if (anomalyDetectionObserver != null) anomalyDetectionObserver.shutdown();
+        if (anomalyMonitor != null) anomalyMonitor.shutdown();
         isAliveChannelManager = false;
         isAliveSendSelector = false;
         isAliveReportSelector = false;

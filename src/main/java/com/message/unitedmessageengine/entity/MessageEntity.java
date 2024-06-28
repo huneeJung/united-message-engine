@@ -1,5 +1,6 @@
 package com.message.unitedmessageengine.entity;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
@@ -64,6 +65,7 @@ public class MessageEntity {
     @Column(name = "RESULT_MESSAGE")
     private String resultMessage;
 
+    @JsonManagedReference
     @OneToMany(mappedBy = "message", fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ImageEntity> imageList;
 
