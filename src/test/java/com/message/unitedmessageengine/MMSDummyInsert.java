@@ -28,7 +28,7 @@ public class MMSDummyInsert {
     @Commit
     @Transactional
     public void dummyInsertTen() {
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < 10; i++) {
             var message = MessageEntity.builder()
                     .messageId(UUID.randomUUID().toString().replaceAll("-", ""))
                     .content("TEST")

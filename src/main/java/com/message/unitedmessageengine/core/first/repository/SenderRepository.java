@@ -1,4 +1,4 @@
-package com.message.unitedmessageengine.core.worker.first.repository;
+package com.message.unitedmessageengine.core.first.repository;
 
 import com.message.unitedmessageengine.entity.MessageEntity;
 import org.springframework.data.domain.Pageable;

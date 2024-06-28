@@ -1,4 +1,4 @@
-package com.message.unitedmessageengine.core.worker.first.vo;
+package com.message.unitedmessageengine.core.first.vo;
 
 import com.message.unitedmessageengine.entity.ImageEntity;
 import lombok.AllArgsConstructor;
