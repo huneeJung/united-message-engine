@@ -1,7 +1,7 @@
 package com.message.unitedmessageengine.core.socket.service.first;
 
 import com.message.unitedmessageengine.constant.FirstConstant.ProtocolType;
-import com.message.unitedmessageengine.core.socket.manager.AbstractChannelManager.ChannelType;
+import com.message.unitedmessageengine.core.socket.manager.ChannelManager.ChannelType;
 import com.message.unitedmessageengine.core.socket.service.ChannelService;
 import com.message.unitedmessageengine.core.socket.vo.ConnectVo;
 import com.message.unitedmessageengine.core.socket.vo.PingVo;
@@ -17,10 +17,14 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayDeque;
 import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.Executors;
 
+import static com.message.unitedmessageengine.constant.FirstConstant.CHARSET;
+import static com.message.unitedmessageengine.constant.FirstConstant.PROTOCOL_PREFIX;
 import static com.message.unitedmessageengine.constant.FirstConstant.ProtocolType.*;
 
 @Slf4j
@@ -29,9 +33,9 @@ import static com.message.unitedmessageengine.constant.FirstConstant.ProtocolTyp
 @Qualifier("firstChannelService")
 public class FirstChannelService implements ChannelService {
 
-    private final JdbcTemplate jdbcTemplate;
     @Qualifier("firstTranslator")
     private final FirstTranslator translator;
+    private final JdbcTemplate jdbcTemplate;
     private final String statusUpdateSql = """
             UPDATE MESSAGE SET STATUS_CODE=?, RESULT_CODE=?, RESULT_MESSAGE=? 
             where MESSAGE_ID=? AND STATUS_CODE!='C'
@@ -43,6 +47,24 @@ public class FirstChannelService implements ChannelService {
     private String password;
     @Value("${agentA.version}")
     private String version;
+
+    public Queue<String> readPartialData(ByteBuffer buffer, byte[] payload) {
+        // 구분자로 데이터 파싱
+        String dataStr = new String(payload, StandardCharsets.UTF_8);
+        var dataArr = dataStr.split("END\\r\\n");
+        buffer.clear();
+        var dataQueue = new ArrayDeque<String>();
+        for (int i = 0; i < dataArr.length; i++) {
+            var data = dataArr[i];
+            if (!data.startsWith(PROTOCOL_PREFIX)) continue;
+            if (!data.endsWith("\r\n")) {
+                if (i == dataArr.length - 1) buffer.put(data.getBytes(CHARSET));
+                break;
+            }
+            dataQueue.offer(data);
+        }
+        return dataQueue;
+    }
 
     public void authenticate(ChannelType type, SocketChannel channel) {
         try {
@@ -73,7 +95,7 @@ public class FirstChannelService implements ChannelService {
         }
     }
 
-    public void processSendResponse(SocketChannel reportChannel, Queue<String> dataQueue) {
+    public void consumeSendResponse(SocketChannel sendChannel, Queue<String> dataQueue) {
         while (!dataQueue.isEmpty()) {
             var data = dataQueue.poll();
             var mapDataOpt = translator.covertToMap(data);
@@ -82,25 +104,21 @@ public class FirstChannelService implements ChannelService {
             var header = mapData.get("BEGIN");
             var key = mapData.getOrDefault("KEY", null);
             // PONG 인 경우
-            if (header.equals(PONG.name())) {
-//                log.info("[PONG] 수신 ::: key {}", key);
-                continue;
-            }
+            if (header.equals(PONG.name())) continue;
             // 인증 응답인 경우
             if (key == null) {
                 checkAuth(SEND.name(), mapData);
                 continue;
             }
-
             var statusCode = "";
             if (mapData.getOrDefault("CODE", "100").equals("100")) statusCode = "P";
             else statusCode = "F";
             jdbcTemplate.update(statusUpdateSql, statusCode, mapData.get("CODE"), mapData.get("DATA"), key);
-//            log.info("[ACK QUEUE] 메시지 결과 삽입 ::: messageId {}", key);
         }
     }
 
-    public void processReportResponse(SocketChannel reportChannel, Queue<String> dataQueue) {
+    public void consumeReportResponse(SocketChannel reportChannel, Queue<String> dataQueue) {
+        if (!reportChannel.isConnected()) throw new RuntimeException("Report Channel is disconnected");
         while (!dataQueue.isEmpty()) {
             var data = dataQueue.poll();
             var mapDataOpt = translator.covertToMap(data);
@@ -109,26 +127,12 @@ public class FirstChannelService implements ChannelService {
             var header = mapData.get("BEGIN");
             var key = mapData.getOrDefault("KEY", null);
             // PONG 인 경우
-            if (header.equals(PONG.name())) {
-//                log.info("[PONG] 수신 ::: key {}", key);
-                continue;
-            }
+            if (header.equals(PONG.name())) continue;
             // 인증 응답인 경우
             if (key == null) {
                 checkAuth(REPORT.name(), mapData);
                 continue;
             }
-//            RESULT_QUEUE.add(
-//                    ResultDto.builder()
-//                            .messageId(key)
-//                            .resultCode(mapData.get("CODE"))
-//                            .resultMessage(mapData.get("DATA"))
-//                            .build()
-//            );
-//            log.info("[RESULT QUEUE] 메시지 결과 삽입 ::: messageId {}", key);
-
-            if (!reportChannel.isConnected()) return;
-
             try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
                 executor.submit(() -> {
                     jdbcTemplate.update(statusUpdateSql, "C", mapData.get("CODE"), mapData.get("DATA"), key);
@@ -139,7 +143,6 @@ public class FirstChannelService implements ChannelService {
                         if (reportAckPayload.isEmpty()) return;
                         var reportAckBuffer = ByteBuffer.wrap(reportAckPayload.get());
                         reportChannel.write(reportAckBuffer);
-//                        log.info("[REPORT CHANNEL] 결과 수신 응답 성공 ::: messageId {}", key);
                     } catch (
                             IOException e) {
                         log.info("[REPORT CHANNEL] 결과 수신 응답 실패 ::: messageId {}", key);

@@ -3,9 +3,8 @@ package com.message.unitedmessageengine.core.socket.manager;
 import com.message.unitedmessageengine.core.socket.service.ChannelService;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
-import lombok.RequiredArgsConstructor;
+import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,37 +24,54 @@ import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import static com.message.unitedmessageengine.core.socket.manager.AbstractChannelManager.ChannelType.REPORT;
-import static com.message.unitedmessageengine.core.socket.manager.AbstractChannelManager.ChannelType.SEND;
+import static com.message.unitedmessageengine.core.socket.manager.ChannelManager.ChannelType.REPORT;
+import static com.message.unitedmessageengine.core.socket.manager.ChannelManager.ChannelType.SEND;
 
 @Slf4j
-@RequiredArgsConstructor
-public abstract class AbstractChannelManager<T extends ChannelService> {
+public class ChannelManager<T extends ChannelService> {
 
-    protected final T socketChannelService;
-    protected final Set<SocketChannel> sendChannelSet = new HashSet<>();
-    protected final Set<SocketChannel> reportChannelSet = new HashSet<>();
+    // constructor
+    private final T socketChannelService;
+    private final String host;
+    private final Integer port;
+    private final Integer connectTimeout;
+    private final Integer readTimeout;
+    private final Integer selectTimeout;
+    private final Integer pingCycle;
+    private final Integer senderCnt;
+    private final Integer reportCnt;
+
+    // member
+    private final Set<SocketChannel> sendChannelSet = new HashSet<>();
+    private final Set<SocketChannel> reportChannelSet = new HashSet<>();
     private final ByteBuffer ackBuffer = ByteBuffer.allocate(10 * 1024);
     private final ByteBuffer reportBuffer = ByteBuffer.allocate(10 * 1024);
-    protected PriorityBlockingQueue<MainChannel> mainSendChannelQueue;
-    protected boolean isAliveChannelManager;
-    protected String host;
-    protected Integer port;
-    protected Integer senderCnt;
-    protected Integer reportCnt;
-    protected Selector sendSelector;
-    protected Selector reportSelector;
+
+    // init
+    private ScheduledExecutorService anomalyMonitor;
+    private PriorityBlockingQueue<MainChannel> mainSendChannelQueue;
+    private Selector sendSelector;
+    private Selector reportSelector;
+    private boolean isAliveChannelManager;
     private boolean isAliveSendSelector;
     private boolean isAliveReportSelector;
-    private ScheduledExecutorService anomalyMonitor;
-    @Value("${tcp.connect-timeout}")
-    private Integer connectTimeout;
-    @Value("${tcp.read-timeout:5000}")
-    private Integer readTimeout;
-    @Value("${tcp.select-timeout:5000}")
-    private Integer selectTimeout;
-    @Value("${tcp.ping-cycle:30000}")
-    private Integer pingCycle;
+
+    @Builder
+    public ChannelManager(
+            T socketChannelService, String host, Integer port, Integer connectTimeout, Integer readTimeout,
+            Integer selectTimeout, Integer pingCycle, Integer senderCnt, Integer reportCnt, boolean isAliveChannelManager
+    ) {
+        this.socketChannelService = socketChannelService;
+        this.host = host;
+        this.port = port;
+        this.connectTimeout = connectTimeout;
+        this.readTimeout = readTimeout;
+        this.selectTimeout = selectTimeout;
+        this.pingCycle = pingCycle;
+        this.senderCnt = senderCnt;
+        this.reportCnt = reportCnt;
+        this.isAliveChannelManager = isAliveChannelManager;
+    }
 
     @PostConstruct
     public void init() throws IOException {
@@ -73,11 +89,8 @@ public abstract class AbstractChannelManager<T extends ChannelService> {
         anomalyMonitor.scheduleAtFixedRate(this::monitoring, pingCycle, pingCycle, TimeUnit.MILLISECONDS);
     }
 
-    protected abstract Queue<String> parsePayload(ByteBuffer buffer, byte[] data);
-
     protected void tcpConnect(ChannelType type) {
         try {
-            // SEND TCP CONNECT
             var channel = SocketChannel.open();
             channel.socket().setSoTimeout(readTimeout);
             channel.socket().setSendBufferSize(1024 * 1024);
@@ -147,10 +160,10 @@ public abstract class AbstractChannelManager<T extends ChannelService> {
                             try {
                                 if (type.equals(SEND)) {
                                     channel.read(ackBuffer);
-                                    socketChannelService.processSendResponse(channel, getAckPayload());
+                                    socketChannelService.consumeSendResponse(channel, getAckPayload());
                                 } else {
                                     channel.read(reportBuffer);
-                                    socketChannelService.processReportResponse(channel, getReportPayload());
+                                    socketChannelService.consumeReportResponse(channel, getReportPayload());
                                 }
                             } catch (IOException e) {
                                 channelSet.remove(channel);
@@ -180,7 +193,7 @@ public abstract class AbstractChannelManager<T extends ChannelService> {
         ackBuffer.flip();
         var bytes = new byte[ackBuffer.remaining()];
         ackBuffer.get(bytes);
-        return parsePayload(ackBuffer, bytes);
+        return socketChannelService.readPartialData(ackBuffer, bytes);
     }
 
     private Queue<String> getReportPayload() {
@@ -188,7 +201,7 @@ public abstract class AbstractChannelManager<T extends ChannelService> {
         reportBuffer.flip();
         var bytes = new byte[reportBuffer.remaining()];
         reportBuffer.get(bytes);
-        return parsePayload(reportBuffer, bytes);
+        return socketChannelService.readPartialData(reportBuffer, bytes);
     }
 
     private void monitoring() {
