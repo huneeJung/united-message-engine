@@ -5,7 +5,7 @@ import com.message.unitedmessageengine.core.first.repository.SenderRepository;
 import com.message.unitedmessageengine.core.first.vo.ImageVo;
 import com.message.unitedmessageengine.core.first.vo.MMSVo;
 import com.message.unitedmessageengine.core.first.vo.SMSVo;
-import com.message.unitedmessageengine.core.socket.manager.first.FirstChannelManager;
+import com.message.unitedmessageengine.core.socket.manager.ChannelManager;
 import com.message.unitedmessageengine.core.translator.first.FirstImageTranslator;
 import com.message.unitedmessageengine.core.translator.first.FirstTranslator;
 import com.message.unitedmessageengine.entity.MessageEntity;
@@ -33,8 +33,8 @@ public class SenderService {
     private final FirstTranslator translator;
     @Qualifier("firstImageTranslator")
     private final FirstImageTranslator fileTranslator;
-
-    private final FirstChannelManager channelManager;
+    @Qualifier("firstChannelManager")
+    private final ChannelManager<?> channelManager;
     private final SenderRepository senderRepository;
 
     @Transactional

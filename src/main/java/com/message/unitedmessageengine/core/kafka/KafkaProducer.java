@@ -26,7 +26,7 @@ public class KafkaProducer {
 
     @Transactional
     @SchedulerLock(name = "fetch_lock")
-    @Scheduled(initialDelayString = "1000", fixedDelayString = "1000")
+    @Scheduled(initialDelayString = "1000", fixedDelayString = "1")
     public void fetch() {
         if (useYN.equals("N")) return;
         var messageList = senderService.findAllMessages("SLM", fetchCount);
