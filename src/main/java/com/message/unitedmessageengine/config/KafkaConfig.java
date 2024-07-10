@@ -20,19 +20,25 @@ public class KafkaConfig {
     @Bean
     public ProducerFactory<String, Object> producerFactory() {
         Map<String, Object> config = new HashMap<>();
-        config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+        config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "172.90.0.72:9092");
         config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, MessageEntitySerializer.class);
+        config.put(ProducerConfig.REQUEST_TIMEOUT_MS_CONFIG, 1000);
+        config.put(ProducerConfig.DELIVERY_TIMEOUT_MS_CONFIG, 1000);
+        config.put(ProducerConfig.TRANSACTION_TIMEOUT_CONFIG, 1000);
         return new DefaultKafkaProducerFactory<>(config);
     }
 
     @Bean
     public ConsumerFactory<String, Object> consumerFactory() {
         Map<String, Object> config = new HashMap<>();
-        config.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+        config.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "172.90.0.72:9092");
         config.put(ConsumerConfig.GROUP_ID_CONFIG, "group_1");
         config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, MessageEntityDeserializer.class);
+        config.put(ProducerConfig.REQUEST_TIMEOUT_MS_CONFIG, 1000);
+        config.put(ProducerConfig.DELIVERY_TIMEOUT_MS_CONFIG, 1000);
+        config.put(ProducerConfig.TRANSACTION_TIMEOUT_CONFIG, 1000);
         return new DefaultKafkaConsumerFactory<>(config);
     }
 

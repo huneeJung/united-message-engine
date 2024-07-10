@@ -21,5 +21,4 @@ public interface ChannelService {
     @Async
     void consumeReportResponse(SocketChannel reportChannel, Queue<String> resultBytes);
 
-
 }
