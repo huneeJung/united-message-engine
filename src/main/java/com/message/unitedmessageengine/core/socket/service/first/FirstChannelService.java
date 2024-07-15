@@ -90,7 +90,7 @@ public class FirstChannelService implements ChannelService {
             var pingBuffer = ByteBuffer.wrap(pingPayload.get());
             senderChannel.write(pingBuffer);
         } catch (IOException e) {
-            log.warn("[PING] 처리 에러 발생 ::: message {}", e.getMessage());
+            log.warn("[PING] 처리 에러 발생 ::: {}", e.getMessage());
             log.warn("", e);
         }
     }

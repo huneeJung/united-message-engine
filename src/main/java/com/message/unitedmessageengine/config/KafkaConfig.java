@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.*;
+import org.springframework.kafka.listener.ContainerProperties;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -36,15 +37,16 @@ public class KafkaConfig {
         config.put(ConsumerConfig.GROUP_ID_CONFIG, "group_1");
         config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, MessageEntityDeserializer.class);
-        config.put(ProducerConfig.REQUEST_TIMEOUT_MS_CONFIG, 1000);
-        config.put(ProducerConfig.DELIVERY_TIMEOUT_MS_CONFIG, 1000);
-        config.put(ProducerConfig.TRANSACTION_TIMEOUT_CONFIG, 1000);
+        config.put(ConsumerConfig.REQUEST_TIMEOUT_MS_CONFIG, 1000);
+        config.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
         return new DefaultKafkaConsumerFactory<>(config);
     }
 
     @Bean
     public ConcurrentKafkaListenerContainerFactory<String, Object> kafkaListenerContainerFactory() {
         ConcurrentKafkaListenerContainerFactory<String, Object> factory = new ConcurrentKafkaListenerContainerFactory<>();
+        // 카프카 수동 커밋 비동기 모드로 전환
+        factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
         factory.setConsumerFactory(consumerFactory());
         return factory;
     }
