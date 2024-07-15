@@ -1,6 +1,7 @@
 package com.message.unitedmessageengine.core.kafka;
 
 import com.message.unitedmessageengine.core.first.service.SenderService;
+import com.message.unitedmessageengine.entity.MessageEntity;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
@@ -25,14 +26,19 @@ public class KafkaProducer {
     @Value("${topic.name:sendMessageEvent}")
     private String topic;
 
-
     @Transactional
     @SchedulerLock(name = "fetch_lock")
     @Scheduled(initialDelayString = "1000", fixedDelayString = "1")
     public void fetch() {
         if (useYN.equals("N")) return;
         var messageList = senderService.findAllMessages("SLM", fetchCount);
-        messageList.forEach((message) -> kafkaTemplate.send(topic, message));
+        for (MessageEntity message : messageList) {
+            try {
+                kafkaTemplate.send(topic, message);
+            } catch (Exception e) {
+                message.setStatusCode("W");
+            }
+        }
     }
 
 }

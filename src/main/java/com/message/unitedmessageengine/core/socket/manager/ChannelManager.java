@@ -107,7 +107,7 @@ public class ChannelManager<T extends ChannelService> {
                 reportChannelSet.add(channel);
             }
         } catch (IOException e) {
-            log.error("[SOCKET CHANNEL] Connect 에러 발생 ::: message {}, host {}, port {}", e.getMessage(), host, port);
+            log.error("[SOCKET CHANNEL] Connect 에러 발생 ::: {}, host {}, port {}", e.getMessage(), host, port);
             log.error("", e);
             throw new RuntimeException(e);
         }
@@ -169,7 +169,7 @@ public class ChannelManager<T extends ChannelService> {
                                 channelSet.remove(channel);
                                 key.cancel();
                                 channel.close();
-                                log.warn("[{} Channel] Read Event 처리중 발생 ::: message {}", type, e.getMessage());
+                                log.warn("[{} Channel] Read Event 처리중 발생 ::: {}", type, e.getMessage());
                                 log.warn("", e);
                             }
                         }
@@ -179,7 +179,7 @@ public class ChannelManager<T extends ChannelService> {
                     log.info("[{} SELECTOR] 종료 작업 수행", type);
                 } catch (Exception e) {
                     isAliveSelector = false;
-                    log.error("[{} SELECTOR] 수신 이벤트 처리 에러 발생 ::: message {}", type, e.getMessage());
+                    log.error("[{} SELECTOR] 수신 이벤트 처리 에러 발생 ::: {}", type, e.getMessage());
                     log.error("", e);
                 }
             }
