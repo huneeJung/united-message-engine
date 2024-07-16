@@ -27,11 +27,13 @@ public class KafkaProducer {
     private String topic;
 
     @Transactional
-    @SchedulerLock(name = "fetch_lock")
-    @Scheduled(initialDelayString = "1000", fixedDelayString = "1")
+    @Scheduled(initialDelayString = "1000", fixedDelayString = "1000")
+    @SchedulerLock(name = "fetch_lock", lockAtLeastFor = "1s", lockAtMostFor = "20s")
     public void fetch() {
         if (useYN.equals("N")) return;
         var messageList = senderService.findAllMessages("SLM", fetchCount);
+        if (messageList.isEmpty()) return;
+        log.info("[FETCHER] 메시지 이벤트 발행 ::: size {}", messageList.size());
         for (MessageEntity message : messageList) {
             try {
                 kafkaTemplate.send(topic, message);

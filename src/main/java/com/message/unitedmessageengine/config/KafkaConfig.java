@@ -2,6 +2,7 @@ package com.message.unitedmessageengine.config;
 
 import com.message.unitedmessageengine.core.kafka.serializer.MessageEntityDeserializer;
 import com.message.unitedmessageengine.core.kafka.serializer.MessageEntitySerializer;
+import lombok.RequiredArgsConstructor;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
@@ -18,17 +19,10 @@ import org.springframework.kafka.listener.ContainerProperties;
 import java.util.Map;
 
 @Configuration
+@RequiredArgsConstructor
 public class KafkaConfig {
 
     public static final String MESSAGE_CONSUMER_BEAN_NAME = "MESSAGE_CONSUMER_BEAN_NAME";
-    private final Map<String, Object> CONSUMER_CONFIG = Map.of(
-            ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "172.90.0.72:9092",
-            ConsumerConfig.GROUP_ID_CONFIG, "group_1",
-            ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class,
-            ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, MessageEntityDeserializer.class,
-            ConsumerConfig.REQUEST_TIMEOUT_MS_CONFIG, 1000,
-            ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false"
-    );
 
     private final Map<String, Object> PRODUCER_CONFIG = Map.of(
             ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "172.90.0.72:9092",
@@ -36,7 +30,17 @@ public class KafkaConfig {
             ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, MessageEntitySerializer.class,
             ProducerConfig.REQUEST_TIMEOUT_MS_CONFIG, 1000,
             ProducerConfig.DELIVERY_TIMEOUT_MS_CONFIG, 1000,
-            ProducerConfig.TRANSACTION_TIMEOUT_CONFIG, 1000
+            ProducerConfig.TRANSACTION_TIMEOUT_CONFIG, 1000,
+            ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, true
+    );
+
+    private final Map<String, Object> CONSUMER_CONFIG = Map.of(
+            ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "172.90.0.72:9092",
+            ConsumerConfig.GROUP_ID_CONFIG, "group_1",
+            ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class,
+            ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, MessageEntityDeserializer.class,
+            ConsumerConfig.REQUEST_TIMEOUT_MS_CONFIG, 1000,
+            ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false"
     );
 
     @Bean
@@ -55,4 +59,5 @@ public class KafkaConfig {
         configurer.configure(factory, consumerFactory);
         return factory;
     }
+
 }
