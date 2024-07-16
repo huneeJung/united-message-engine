@@ -112,7 +112,7 @@ public class FirstChannelService implements ChannelService {
             }
             var statusCode = "";
             if (mapData.getOrDefault("CODE", "100").equals("100")) statusCode = "P";
-            else statusCode = "F";
+            else statusCode = "C";
             jdbcTemplate.update(statusUpdateSql, statusCode, mapData.get("CODE"), mapData.get("DATA"), key);
         }
     }
