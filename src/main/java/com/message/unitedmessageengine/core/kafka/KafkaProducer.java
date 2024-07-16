@@ -17,7 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class KafkaProducer {
 
     private final SenderService senderService;
-    private final KafkaTemplate<String, Object> kafkaTemplate;
+    private final KafkaTemplate<Object, Object> kafkaTemplate;
 
     @Value("${agentA.useYN}")
     private String useYN;
