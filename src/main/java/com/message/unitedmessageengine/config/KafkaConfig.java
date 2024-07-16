@@ -2,6 +2,7 @@ package com.message.unitedmessageengine.config;
 
 import com.message.unitedmessageengine.core.kafka.serializer.MessageEntityDeserializer;
 import com.message.unitedmessageengine.core.kafka.serializer.MessageEntitySerializer;
+import lombok.RequiredArgsConstructor;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
@@ -18,6 +19,7 @@ import org.springframework.kafka.listener.ContainerProperties;
 import java.util.Map;
 
 @Configuration
+@RequiredArgsConstructor
 public class KafkaConfig {
 
     public static final String MESSAGE_CONSUMER_BEAN_NAME = "MESSAGE_CONSUMER_BEAN_NAME";
@@ -57,4 +59,5 @@ public class KafkaConfig {
         configurer.configure(factory, consumerFactory);
         return factory;
     }
+
 }
