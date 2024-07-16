@@ -11,6 +11,8 @@ import org.springframework.stereotype.Component;
 import java.time.Duration;
 import java.time.Instant;
 
+import static com.message.unitedmessageengine.config.KafkaConfig.MESSAGE_CONSUMER_BEAN_NAME;
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -18,7 +20,7 @@ public class KafkaConsumer {
 
     private final SenderService senderService;
 
-    @KafkaListener(topics = "sendMessageEvent", groupId = "group_1")
+    @KafkaListener(topics = "sendMessageEvent", containerFactory = MESSAGE_CONSUMER_BEAN_NAME)
     public void listener(MessageEntity message, Acknowledgment acknowledgment) {
 
         log.info("[SENDER] 발송 처리 시작 ::: messageId {}", message.getMessageId());
