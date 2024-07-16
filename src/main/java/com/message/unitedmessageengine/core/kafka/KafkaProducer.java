@@ -27,7 +27,7 @@ public class KafkaProducer {
     private String topic;
 
     @Transactional
-    @SchedulerLock(name = "fetch_lock")
+    @SchedulerLock(name = "fetch_lock", lockAtLeastFor = "1s", lockAtMostFor = "20s")
     @Scheduled(initialDelayString = "1000", fixedDelayString = "1000")
     public void fetch() {
         if (useYN.equals("N")) return;
