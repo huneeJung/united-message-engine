@@ -31,8 +31,9 @@ public class KafkaProducer {
     @Scheduled(initialDelayString = "1000", fixedDelayString = "1000")
     public void fetch() {
         if (useYN.equals("N")) return;
-        log.info("TEST1");
         var messageList = senderService.findAllMessages("SLM", fetchCount);
+        if (messageList.isEmpty()) return;
+        log.info("[FETCHER] Message produce ::: size {}", messageList.size());
         for (MessageEntity message : messageList) {
             try {
                 kafkaTemplate.send(topic, message);
