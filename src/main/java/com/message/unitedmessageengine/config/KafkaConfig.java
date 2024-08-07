@@ -25,7 +25,7 @@ public class KafkaConfig {
     public static final String MESSAGE_CONSUMER_BEAN_NAME = "MESSAGE_CONSUMER_BEAN_NAME";
 
     private final Map<String, Object> PRODUCER_CONFIG = Map.of(
-            ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "172.90.0.72:9092",
+            ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "172.90.4.211:9092",
             ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class,
             ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, MessageEntitySerializer.class,
             ProducerConfig.REQUEST_TIMEOUT_MS_CONFIG, 1000,
@@ -35,7 +35,7 @@ public class KafkaConfig {
     );
 
     private final Map<String, Object> CONSUMER_CONFIG = Map.of(
-            ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "172.90.0.72:9092",
+            ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "172.90.4.211:9092",
             ConsumerConfig.GROUP_ID_CONFIG, "group_1",
             ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class,
             ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, MessageEntityDeserializer.class,
