@@ -12,10 +12,18 @@ services:
       - "9092:9092"
     environment:
       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://172.90.0.72:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
 
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+
+## 프로듀서/콘슈머 연동 IP 설정
+## 1. docker exec -it <container_id> /bin/bash
+## 2. cd /opt/kafka/config
+## 3. vi server.properties
+## 4. advertised.listeners=PLAINTEXT://<kafka-host-ip (private-ip)>:9092
+
+## 토픽 수동으로 설정 및 생성하는 것이 좋음 아니면 서버 실행시 매번 같은 토픽을 생성하여 익셉션 발생
