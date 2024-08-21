@@ -25,7 +25,7 @@ public class KafkaConsumer {
         log.info("[SENDER] 발송 처리 시작 ::: messageId {}", message.getMessageId());
         var start = Instant.now();
 
-        senderService.send(message);
+        senderService.messageSend(message);
         acknowledgment.acknowledge();
 
         var end = Instant.now();

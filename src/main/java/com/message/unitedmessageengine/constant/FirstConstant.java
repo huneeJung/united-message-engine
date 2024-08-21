@@ -17,7 +17,9 @@ public class FirstConstant {
             Map.of(
                     "SMS", "SMS",
                     "LMS", "TXT",
-                    "MMS", "IMT"
+                    "MMS", "IMT",
+                    "TKA", "ALT",
+                    "TKI", "ALI"
             );
 
     @Getter

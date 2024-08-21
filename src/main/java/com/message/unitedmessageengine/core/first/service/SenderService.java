@@ -1,7 +1,7 @@
 package com.message.unitedmessageengine.core.first.service;
 
 import com.google.common.primitives.Bytes;
-import com.message.unitedmessageengine.core.first.repository.SenderRepository;
+import com.message.unitedmessageengine.core.first.repository.MessageRepository;
 import com.message.unitedmessageengine.core.first.vo.ImageVo;
 import com.message.unitedmessageengine.core.first.vo.MMSVo;
 import com.message.unitedmessageengine.core.first.vo.SMSVo;
@@ -35,19 +35,18 @@ public class SenderService {
     private final FirstImageTranslator fileTranslator;
     @Qualifier("firstChannelManager")
     private final ChannelManager<?> channelManager;
-    private final SenderRepository senderRepository;
+    private final MessageRepository messageRepository;
 
     @Transactional
     public List<MessageEntity> findAllMessages(String serviceDivision, Integer fetchCount) {
         // TODO 메시지 상태를 특정 건수를 들고와서 메시지 상태를 업데이트하고 발송하게되면, 발송중 서버가 꺼졌을때 발송이 안되는 문제가 생길 수 있음
-        var messageList = senderRepository.findByStatusCodeAndServiceDivisionOrderBySendDttAsc("W", serviceDivision, PageRequest.of(0, fetchCount));
-        senderRepository.batchUpdate(messageList);
+        var messageList = messageRepository.findByStatusCodeAndServiceDivisionOrderBySendDttAsc("W", serviceDivision, PageRequest.of(0, fetchCount));
+        messageRepository.batchUpdate(messageList);
         return messageList;
     }
 
-
     @Transactional
-    public void send(MessageEntity message) {
+    public void messageSend(MessageEntity message) {
         var serviceType = message.getServiceType();
         var messageVo = serviceType.equals(SMS.name()) ? SMSVo.from(message) : MMSVo.from(message);
         var messagePayload = translator.convertToBytes(messageVo);
@@ -73,8 +72,8 @@ public class SenderService {
         try {
             channelManager.write(tcpPayload.get());
         } catch (Exception e) {
-            var result = senderRepository.findById(message.getId()).get();
-            result.setStatusCode("W");
+            message.setStatusCode("W");
+            messageRepository.save(message);
             log.error("[SENDER] 발송 보류 ::: messageId {}", message.getMessageId());
             log.error("", e);
         }

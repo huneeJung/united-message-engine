@@ -1,7 +1,7 @@
 package com.message.unitedmessageengine.sample;
 
-import com.message.unitedmessageengine.entity.ImageEntity;
 import com.message.unitedmessageengine.entity.MessageEntity;
+import com.message.unitedmessageengine.entity.MessageImageEntity;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -55,7 +55,7 @@ public class DummyBatchRepositoryImpl implements DummyBatchRepository {
     }
 
     // Dummy TEST Image Insert Batch
-    public void batchInsertImage(List<ImageEntity> batchList) {
+    public void batchInsertImage(List<MessageImageEntity> batchList) {
         jdbcTemplate.batchUpdate(
                 """
                             INSERT INTO IMAGE(
@@ -78,10 +78,10 @@ public class DummyBatchRepositoryImpl implements DummyBatchRepository {
 
     }
 
-    private void setStatementInsert(PreparedStatement ps, ImageEntity imageEntity) throws SQLException {
-        ps.setString(1, imageEntity.getImageName());
-        ps.setString(2, imageEntity.getImagePath());
-        ps.setLong(3, imageEntity.getMessage().getId());
+    private void setStatementInsert(PreparedStatement ps, MessageImageEntity messageImageEntity) throws SQLException {
+        ps.setString(1, messageImageEntity.getImageName());
+        ps.setString(2, messageImageEntity.getImagePath());
+        ps.setLong(3, messageImageEntity.getMessage().getId());
     }
 
 }

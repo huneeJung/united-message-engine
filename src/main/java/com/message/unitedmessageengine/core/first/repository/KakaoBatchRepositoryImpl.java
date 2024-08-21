@@ -1,6 +1,6 @@
 package com.message.unitedmessageengine.core.first.repository;
 
-import com.message.unitedmessageengine.entity.MessageEntity;
+import com.message.unitedmessageengine.entity.KakaoEntity;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -10,14 +10,14 @@ import java.sql.SQLException;
 import java.util.List;
 
 @RequiredArgsConstructor
-public class SenderBatchRepositoryImpl implements SenderBatchRepository {
+public class KakaoBatchRepositoryImpl implements KakaoBatchRepository {
 
     private final JdbcTemplate jdbcTemplate;
 
-    public void batchUpdate(List<MessageEntity> batchList) {
+    public void batchUpdate(List<KakaoEntity> batchList) {
         jdbcTemplate.batchUpdate(
                 """
-                            UPDATE MESSAGE SET STATUS_CODE = ? where MESSAGE_ID=?
+                            UPDATE KAKAO SET STATUS_CODE = ? where KAKAO_ID=?
                         """,
                 new BatchPreparedStatementSetter() {
                     @Override
@@ -34,9 +34,9 @@ public class SenderBatchRepositoryImpl implements SenderBatchRepository {
 
     }
 
-    private void setStatementUpdate(PreparedStatement ps, MessageEntity messageEntity) throws SQLException {
+    private void setStatementUpdate(PreparedStatement ps, KakaoEntity kakaoEntity) throws SQLException {
         ps.setString(1, "P");
-        ps.setString(2, messageEntity.getMessageId());
+        ps.setString(2, kakaoEntity.getKakaoId());
     }
 
 }

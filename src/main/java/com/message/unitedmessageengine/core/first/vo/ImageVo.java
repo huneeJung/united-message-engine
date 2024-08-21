@@ -1,26 +1,16 @@
 package com.message.unitedmessageengine.core.first.vo;
 
-import com.message.unitedmessageengine.entity.ImageEntity;
-import lombok.AllArgsConstructor;
+import com.message.unitedmessageengine.entity.MessageImageEntity;
 import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
 
-@Getter
-@Setter
 @Builder
-@AllArgsConstructor
-public class ImageVo {
+public record ImageVo(Long imageId, String fileName, String filePath) {
 
-    private final Long imageId;
-    private final String fileName;
-    private final String filePath;
-
-    public static ImageVo from(ImageEntity imageEntity) {
+    public static ImageVo from(MessageImageEntity messageImageEntity) {
         return ImageVo.builder()
-                .imageId(imageEntity.getImageId())
-                .fileName(imageEntity.getImageName())
-                .filePath(imageEntity.getImagePath())
+                .imageId(messageImageEntity.getImageId())
+                .fileName(messageImageEntity.getImageName())
+                .filePath(messageImageEntity.getImagePath())
                 .build();
     }
 
