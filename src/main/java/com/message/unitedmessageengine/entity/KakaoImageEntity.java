@@ -10,13 +10,13 @@ import lombok.*;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "IMAGE")
-public class ImageEntity {
+@Table(name = "KAKAO_IMAGE")
+public class KakaoImageEntity {
 
     @Id
-    @Column(name = "IMAGE_ID")
+    @Column(name = "SEQ")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long imageId;
+    private Long seq;
 
     @Column(name = "IMAGE_NAME", nullable = false)
     private String imageName;
@@ -26,7 +26,7 @@ public class ImageEntity {
 
     @ManyToOne
     @JsonBackReference
-    @JoinColumn(name = "ID")
-    private MessageEntity message;
+    @JoinColumn(name = "SEQ")
+    private KakaoEntity kakao;
 
 }

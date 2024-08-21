@@ -14,19 +14,19 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "MESSAGE", indexes = {
-        @Index(name = "idx_messageId", columnList = "MESSAGE_ID"),
+@Table(name = "KAKAO", indexes = {
+        @Index(name = "idx_kakaoId", columnList = "KAKAO_ID"),
         @Index(name = "idx_statusCode", columnList = "STATUS_CODE,SERVICE_DIVISION")
 })
-public class MessageEntity {
+public class KakaoEntity {
 
     @Id
     @Column(name = "SEQ")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long seq;
 
-    @Column(name = "MESSAGE_ID", nullable = false)
-    private String messageId;
+    @Column(name = "KAKAO_ID", nullable = false)
+    private String kakaoId;
 
     // SLM, KKO
     @Column(name = "SERVICE_DIVISION", nullable = false)
@@ -52,6 +52,21 @@ public class MessageEntity {
     @Column(name = "FROM_NUMBER")
     private String fromNumber;
 
+    @Column(name = "SENDER_KEY")
+    private String senderKey;
+
+    @Column(name = "TMP_CODE")
+    private String tmpCode;
+
+    @Column(name = "ADV")
+    private String adv;
+
+    @Column(name = "BUTTON")
+    private String button;
+
+    @Column(name = "SUBJECT")
+    private String subject;
+
     @CreatedDate
     @Column(name = "REG_DTT")
     private LocalDateTime regDtt;
@@ -66,7 +81,7 @@ public class MessageEntity {
     private String resultMessage;
 
     @JsonManagedReference
-    @OneToMany(mappedBy = "message", fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<MessageImageEntity> imageList;
+    @OneToMany(mappedBy = "kakao", fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<KakaoImageEntity> imageList;
 
 }

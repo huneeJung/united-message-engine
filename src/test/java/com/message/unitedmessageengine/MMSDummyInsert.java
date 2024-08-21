@@ -1,7 +1,7 @@
 package com.message.unitedmessageengine;
 
-import com.message.unitedmessageengine.entity.ImageEntity;
 import com.message.unitedmessageengine.entity.MessageEntity;
+import com.message.unitedmessageengine.entity.MessageImageEntity;
 import com.message.unitedmessageengine.sample.DummyRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,16 +43,16 @@ public class MMSDummyInsert {
             dummyRepository.save(message);
         }
 
-        List<ImageEntity> imageEntityList = new ArrayList<>();
+        List<MessageImageEntity> messageImageEntityList = new ArrayList<>();
         for (MessageEntity message : dummyRepository.findAll()) {
-            var imageEntity = ImageEntity.builder()
+            var imageEntity = MessageImageEntity.builder()
                     .imageName("mms.jpg")
                     .imagePath("/Users/mz01-junghunee/Desktop/mms2.jpg")
                     .message(message)
                     .build();
-            imageEntityList.add(imageEntity);
+            messageImageEntityList.add(imageEntity);
         }
-        dummyRepository.batchInsertImage(imageEntityList);
+        dummyRepository.batchInsertImage(messageImageEntityList);
     }
 
     // 1000건
@@ -77,16 +77,16 @@ public class MMSDummyInsert {
         }
         dummyRepository.batchInsertMessage(list);
 
-        List<ImageEntity> imageEntityList = new ArrayList<>();
+        List<MessageImageEntity> messageImageEntityList = new ArrayList<>();
         for (MessageEntity message : dummyRepository.findAll()) {
-            var imageEntity = ImageEntity.builder()
+            var imageEntity = MessageImageEntity.builder()
                     .imageName("mms.jpg")
                     .imagePath("/Users/mz01-junghunee/Desktop/mms2.jpg")
                     .message(message)
                     .build();
-            imageEntityList.add(imageEntity);
+            messageImageEntityList.add(imageEntity);
         }
-        dummyRepository.batchInsertImage(imageEntityList);
+        dummyRepository.batchInsertImage(messageImageEntityList);
 
     }
 
@@ -112,16 +112,16 @@ public class MMSDummyInsert {
         }
         dummyRepository.batchInsertMessage(list);
 
-        List<ImageEntity> imageEntityList = new ArrayList<>();
+        List<MessageImageEntity> messageImageEntityList = new ArrayList<>();
         for (MessageEntity message : dummyRepository.findAll()) {
-            var imageEntity = ImageEntity.builder()
+            var imageEntity = MessageImageEntity.builder()
                     .imageName("mms.jpg")
                     .imagePath("/Users/mz01-junghunee/Desktop/mms2.jpg")
                     .message(message)
                     .build();
-            imageEntityList.add(imageEntity);
+            messageImageEntityList.add(imageEntity);
         }
-        dummyRepository.batchInsertImage(imageEntityList);
+        dummyRepository.batchInsertImage(messageImageEntityList);
     }
 
     // 100000건
@@ -149,16 +149,16 @@ public class MMSDummyInsert {
             }
         }
 
-        List<ImageEntity> imageEntityList = new ArrayList<>();
+        List<MessageImageEntity> messageImageEntityList = new ArrayList<>();
         for (MessageEntity message : dummyRepository.findAll()) {
-            var imageEntity = ImageEntity.builder()
+            var imageEntity = MessageImageEntity.builder()
                     .imageName("mms.jpg")
                     .imagePath("/Users/mz01-junghunee/Desktop/mms2.jpg")
                     .message(message)
                     .build();
-            imageEntityList.add(imageEntity);
+            messageImageEntityList.add(imageEntity);
         }
-        dummyRepository.batchInsertImage(imageEntityList);
+        dummyRepository.batchInsertImage(messageImageEntityList);
     }
 
 }

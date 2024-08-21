@@ -1,24 +1,12 @@
 package com.message.unitedmessageengine.core.first.vo;
 
 import com.message.unitedmessageengine.entity.MessageEntity;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
 
 import static com.message.unitedmessageengine.constant.FirstConstant.CONVERT_TYPE;
 
-@Getter
-@Setter
 @Builder
-@AllArgsConstructor
-public class SMSVo {
-
-    private final String TYPE;
-    private final String KEY;
-    private final String PHONE;
-    private final String CALLBACK;
-    private final String MESSAGE;
+public record SMSVo(String TYPE, String KEY, String PHONE, String CALLBACK, String MESSAGE) {
 
     public static SMSVo from(MessageEntity messageEntity) {
         return SMSVo.builder()
