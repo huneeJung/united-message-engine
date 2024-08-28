@@ -28,6 +28,7 @@ import static com.message.unitedmessageengine.core.socket.manager.ChannelManager
 import static com.message.unitedmessageengine.core.socket.manager.ChannelManager.ChannelType.SEND;
 
 @Slf4j
+@Builder
 public class ChannelManager<T extends ChannelService> {
 
     // constructor
@@ -52,32 +53,15 @@ public class ChannelManager<T extends ChannelService> {
     private PriorityBlockingQueue<MainChannel> mainSendChannelQueue;
     private Selector sendSelector;
     private Selector reportSelector;
-    private boolean isAliveChannelManager;
+
+    // alive
     private boolean isAliveSendSelector;
     private boolean isAliveReportSelector;
 
-    @Builder
-    public ChannelManager(
-            T socketChannelService, String host, Integer port, Integer connectTimeout, Integer readTimeout,
-            Integer selectTimeout, Integer pingCycle, Integer senderCnt, Integer reportCnt, boolean isAliveChannelManager
-    ) {
-        this.socketChannelService = socketChannelService;
-        this.host = host;
-        this.port = port;
-        this.connectTimeout = connectTimeout;
-        this.readTimeout = readTimeout;
-        this.selectTimeout = selectTimeout;
-        this.pingCycle = pingCycle;
-        this.senderCnt = senderCnt;
-        this.reportCnt = reportCnt;
-        this.isAliveChannelManager = isAliveChannelManager;
-    }
-
     @PostConstruct
     public void init() throws IOException {
-        if (!isAliveChannelManager) return;
-        isAliveSendSelector = true;
-        isAliveReportSelector = true;
+        isAliveSendSelector = senderCnt > 0;
+        isAliveReportSelector = reportCnt > 0;
         mainSendChannelQueue = new PriorityBlockingQueue<>(senderCnt);
         sendSelector = Selector.open();
         reportSelector = Selector.open();
@@ -89,6 +73,10 @@ public class ChannelManager<T extends ChannelService> {
         anomalyMonitor.scheduleAtFixedRate(this::monitoring, pingCycle, pingCycle, TimeUnit.MILLISECONDS);
     }
 
+    // 소켓 채널의 버퍼 사이즈는 OS에 설정된 최대 버퍼 크기를 넘을 수 없다.
+    // MAC OS : sysctl kern.ipc.maxsockbuf
+    // Default 버퍼 사이즈는 아래 설정에 의해 결정
+    // MAC OS : sysctl net.inet.tcp.sendspace 또는 sysctl net.inet.tcp.recvspace
     protected void tcpConnect(ChannelType type) {
         try {
             var channel = SocketChannel.open();
@@ -113,8 +101,8 @@ public class ChannelManager<T extends ChannelService> {
         }
     }
 
-    // 네트워크 IO 속도보다 CPU 처리 속도가 빠르므로, 비동기로 처리할 이유가 없음
-    // 하지만 부하가 크지 않은 선에서 가상 쓰레드로써 비동기로 write 처리해주면 소켓 채널의 일정량의 버퍼 데이터로 계속해서 유지할 수 있게 됨
+    // @Async 을 적용하여 네이티브 쓰레드로써 비동기 처리할 시 네트워크 IO 속도보다 CPU 처리 속도가 빨라 병목현상 및 오버헤드 발생
+    // 부하가 크지 않은 가상 쓰레드로써 비동기로 write 처리해주면 소켓 채널의 일정량의 버퍼 데이터로 계속해서 빠르게 전송할 수 있게 됨
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void write(byte[] payload) throws Exception {
         while (true) {
@@ -205,13 +193,13 @@ public class ChannelManager<T extends ChannelService> {
     }
 
     private void monitoring() {
-        if (!isAliveSendSelector) {
-            log.warn("[SEND SELECTOR] 이상 감지 Regenerate 수행 ::: isAliveSelector {}", isAliveSendSelector);
+        if (!isAliveSendSelector && senderCnt > 0) {
+            log.warn("[SEND SELECTOR] 이상 감지 Regenerate 수행 ::: isAliveSendSelector {}", isAliveSendSelector);
             isAliveSendSelector = true;
             detectSelectorEvent(SEND);
         }
-        if (!isAliveReportSelector) {
-            log.warn("[REPORT SELECTOR] 이상 감지 Regenerate 수행 ::: isAliveSelector {}", isAliveReportSelector);
+        if (!isAliveReportSelector && reportCnt > 0) {
+            log.warn("[REPORT SELECTOR] 이상 감지 Regenerate 수행 ::: isAliveReportSelector {}", isAliveReportSelector);
             isAliveReportSelector = true;
             detectSelectorEvent(REPORT);
         }
@@ -233,7 +221,6 @@ public class ChannelManager<T extends ChannelService> {
     @PreDestroy
     public void destroy() throws IOException {
         if (anomalyMonitor != null) anomalyMonitor.shutdown();
-        isAliveChannelManager = false;
         isAliveSendSelector = false;
         isAliveReportSelector = false;
         if (sendSelector != null) sendSelector.close();
