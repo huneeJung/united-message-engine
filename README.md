@@ -19,7 +19,6 @@ UMS(Unified Messaging Service) 중계 엔진은 기업형 메시징 서비스를
 ## 주요 기능
 - 대용량 메시지 발송 처리
 - 실시간 발송 결과 수신 (Report) 처리
-- TPS(Transaction Per Second) 기반 메시지 제어
 - 이미지 캐싱을 통한 MMS 최적화
 - 실시간 모니터링 및 상태 관리
 
