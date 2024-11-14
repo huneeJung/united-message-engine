@@ -1,4 +1,4 @@
-# UMS Message Relay Engine
+# UMS Message Engine
 
 통신사 메시지 발송을 위한 중계 엔진 시스템입니다. NIO 기반의 비동기 소켓 통신을 통해 고성능 메시지 처리를 구현하였습니다.
 
