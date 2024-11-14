@@ -42,9 +42,9 @@ UMS(Unified Messaging Service) 중계 엔진은 기업형 메시징 서비스를
 ## 시스템 아키텍처
 ### 메시지 처리 흐름
 ```
-DB → Kafka Producer → Kafka Topic → Consumer → Protocol Converter → Socket Channel → Gateway
+DB Select → Kafka Producer → Kafka Topic → Consumer → Protocol Converter → Socket Channel → Gateway
                                                                               
-                                                         Result Processing ← Report Channel
+                                                       Result Processing ← Report Channel ← Gateway
 ```
 
 ### 통신 채널 구조
