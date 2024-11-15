@@ -52,9 +52,8 @@ public class SenderService {
         var messagePayload = translator.convertToBytes(messageVo);
         if (serviceType.equals(MMS.name())) {
             var imageList = message.getImageList();
-            // TODO
+            // TODO MMS 이미지 없을 시 실패 처리
             if (imageList == null || imageList.isEmpty()) {
-                log.warn("[SENDER] 발송 실패 ::: MMS 이미지 정보 없음");
             }
             for (int i = 0; i < imageList.size(); i++) {
                 var imageDto = ImageVo.from(imageList.get(i));
@@ -62,19 +61,13 @@ public class SenderService {
                 messagePayload = Bytes.concat(messagePayload, filePayload);
             }
         }
-        var tcpPayload = translator.addTcpFraming(
-                ProtocolType.valueOf(message.getServiceType()), messagePayload
-        );
-        // TODO
-        if (tcpPayload.isEmpty()) {
-            log.warn("[SENDER] 내용 전문 NULL");
-        }
+        var tcpPayload = translator.addTcpFraming(ProtocolType.valueOf(message.getServiceType()), messagePayload);
         try {
-            channelManager.write(tcpPayload.get());
+            channelManager.write(tcpPayload);
         } catch (Exception e) {
             message.setStatusCode("W");
             messageRepository.save(message);
-            log.error("[SENDER] 발송 보류 ::: messageId {}", message.getMessageId());
+            log.error("발송 보류 ::: messageId {}", message.getMessageId());
             log.error("", e);
         }
     }

@@ -25,7 +25,7 @@ public class FirstImageTranslator {
     private final Cache<Long, byte[]> imageCache;
 
     public byte[] readFileImage(Integer index, ImageVo imageVo) {
-        var imageId = imageVo.imageId();
+        var imageId = imageVo.imageSeq();
         byte[] result = imageCache.getIfPresent(imageId);
         if (result != null) return result;
 

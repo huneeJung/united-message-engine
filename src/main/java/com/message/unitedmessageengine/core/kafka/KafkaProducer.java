@@ -34,7 +34,7 @@ public class KafkaProducer {
         if (useYN.equals("N")) return;
         var messageList = senderService.findAllMessages("SLM", fetchCount);
         if (messageList.isEmpty()) return;
-        log.info("[FETCHER] 메시지 이벤트 발행 ::: size {}", messageList.size());
+        log.info("메시지 이벤트 발행 ::: size {}", messageList.size());
         for (MessageEntity message : messageList) {
             try {
                 kafkaTemplate.send(topic, message);
@@ -52,7 +52,7 @@ public class KafkaProducer {
         if (useYN.equals("N")) return;
         var messageList = senderService.findAllMessages("KKO", fetchCount);
         if (messageList.isEmpty()) return;
-        log.info("[FETCHER] 카카오 이벤트 발행 ::: size {}", messageList.size());
+        log.info("카카오 이벤트 발행 ::: size {}", messageList.size());
         for (MessageEntity message : messageList) {
             try {
                 kafkaTemplate.send(topic, message);
