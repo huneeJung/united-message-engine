@@ -73,11 +73,10 @@ public class FirstChannelService implements ChannelService {
                     .LINE(line.name()).VERSION(version).build();
             var payload = translator.convertToBytes(connectVO);
             var authPayload = translator.addTcpFraming(CONNECT, payload);
-            if (authPayload.isEmpty()) return;
-            var authBuffer = ByteBuffer.wrap(authPayload.get());
+            var authBuffer = ByteBuffer.wrap(authPayload);
             channel.write(authBuffer);
         } catch (IOException e) {
-            log.info("[{} Channel] 인증 에러 발생", type);
+            log.info("[{}] 인증 에러 발생", type);
         }
     }
 
@@ -86,8 +85,7 @@ public class FirstChannelService implements ChannelService {
             var pingVO = new PingVo();
             var payload = translator.convertToBytes(pingVO);
             var pingPayload = translator.addTcpFraming(PING, payload);
-            if (pingPayload.isEmpty()) return;
-            var pingBuffer = ByteBuffer.wrap(pingPayload.get());
+            var pingBuffer = ByteBuffer.wrap(pingPayload);
             senderChannel.write(pingBuffer);
         } catch (IOException e) {
             log.warn("[PING] 처리 에러 발생 ::: {}", e.getMessage());
@@ -118,7 +116,7 @@ public class FirstChannelService implements ChannelService {
     }
 
     public void consumeReportResponse(SocketChannel reportChannel, Queue<String> dataQueue) {
-        if (!reportChannel.isConnected()) throw new RuntimeException("Report Channel is disconnected");
+        if (!reportChannel.isConnected()) throw new RuntimeException("[Report] 채널 끊김");
         while (!dataQueue.isEmpty()) {
             var data = dataQueue.poll();
             var mapDataOpt = translator.covertToMap(data);
@@ -140,12 +138,11 @@ public class FirstChannelService implements ChannelService {
                         var reportAckVo = new ReportAckVo(key);
                         var payload = translator.convertToBytes(reportAckVo);
                         var reportAckPayload = translator.addTcpFraming(ACK, payload);
-                        if (reportAckPayload.isEmpty()) return;
-                        var reportAckBuffer = ByteBuffer.wrap(reportAckPayload.get());
+                        var reportAckBuffer = ByteBuffer.wrap(reportAckPayload);
                         reportChannel.write(reportAckBuffer);
                     } catch (
                             IOException e) {
-                        log.info("[REPORT CHANNEL] 결과 수신 응답 실패 ::: messageId {}", key);
+                        log.info("[REPORT] 결과 수신 응답 실패 ::: messageId {}", key);
                     }
                 });
             }
@@ -156,9 +153,9 @@ public class FirstChannelService implements ChannelService {
         var code = authData.get("CODE");
         var messageEntity = authData.get("DATA");
         if (code.equals("100")) {
-            log.info("[{} Channel] 인증 완료 ::: code {}, messageEntity {}", channelType, code, messageEntity);
+            log.info("[{}] 인증 완료 ::: code {}, messageEntity {}", channelType, code, messageEntity);
         } else {
-            throw new RuntimeException(String.format("[Channel] 인증 실패 ::: code %s, messageEntity %s", code, messageEntity));
+            throw new RuntimeException(String.format("인증 실패 ::: code %s, messageEntity %s", code, messageEntity));
         }
     }
 

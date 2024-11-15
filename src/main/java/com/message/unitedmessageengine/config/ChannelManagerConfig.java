@@ -37,7 +37,6 @@ public class ChannelManagerConfig {
     @Bean(name = "firstChannelManager")
     public ChannelManager<ChannelService> channelManager() {
         return ChannelManager.builder()
-                .isAliveChannelManager(isAliveChannelManager.equals("Y"))
                 .socketChannelService(channelService)
                 .host(host)
                 .port(port)

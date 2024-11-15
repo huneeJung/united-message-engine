@@ -22,14 +22,14 @@ public class KafkaConsumer {
 
     @KafkaListener(topics = "sendMessageEvent", containerFactory = MESSAGE_CONSUMER_BEAN_NAME)
     public void listener(MessageEntity message, Acknowledgment acknowledgment) {
-        log.info("[SENDER] 발송 처리 시작 ::: messageId {}", message.getMessageId());
+        log.info("발송 시작 ::: messageId {}", message.getMessageId());
         var start = Instant.now();
 
         senderService.messageSend(message);
         acknowledgment.acknowledge();
 
         var end = Instant.now();
-        log.info("[SENDER] 발송 처리 종료 ::: messageId {}, WORKING_TIME {}ms,",
+        log.info("발송 종료 ::: messageId {}, WORKING_TIME {}ms,",
                 message.getMessageId(), Duration.between(start, end).toMillis());
     }
 

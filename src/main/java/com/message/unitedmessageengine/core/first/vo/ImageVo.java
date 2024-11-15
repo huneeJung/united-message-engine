@@ -4,11 +4,11 @@ import com.message.unitedmessageengine.entity.MessageImageEntity;
 import lombok.Builder;
 
 @Builder
-public record ImageVo(Long imageId, String fileName, String filePath) {
+public record ImageVo(Long imageSeq, String fileName, String filePath) {
 
     public static ImageVo from(MessageImageEntity messageImageEntity) {
         return ImageVo.builder()
-                .imageId(messageImageEntity.getImageId())
+                .imageSeq(messageImageEntity.getSeq())
                 .fileName(messageImageEntity.getImageName())
                 .filePath(messageImageEntity.getImagePath())
                 .build();

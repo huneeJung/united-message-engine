@@ -81,7 +81,7 @@ public class DummyBatchRepositoryImpl implements DummyBatchRepository {
     private void setStatementInsert(PreparedStatement ps, MessageImageEntity messageImageEntity) throws SQLException {
         ps.setString(1, messageImageEntity.getImageName());
         ps.setString(2, messageImageEntity.getImagePath());
-        ps.setLong(3, messageImageEntity.getMessage().getId());
+        ps.setLong(3, messageImageEntity.getMessage().getSeq());
     }
 
 }

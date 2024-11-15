@@ -1,7 +1,6 @@
 package com.message.unitedmessageengine.core.translator.first;
 
 import com.google.common.primitives.Bytes;
-import com.message.unitedmessageengine.constant.FirstConstant.*;
 import com.message.unitedmessageengine.core.translator.Translator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,7 +26,7 @@ import static com.message.unitedmessageengine.constant.FirstConstant.*;
 public class FirstTranslator implements Translator {
 
     @Override
-    public Optional<byte[]> addTcpFraming(ProtocolType type, byte[] payload) {
+    public byte[] addTcpFraming(ProtocolType type, byte[] payload) {
         String begin;
         switch (type) {
             case CONNECT:
@@ -49,12 +48,11 @@ public class FirstTranslator implements Translator {
                 begin = PROTOCOL_PREFIX + "ACK" + PROTOCOL_DELIMITER;
                 break;
             default:
-                log.warn("[Translator] 외부 규격 변환 실패 - 지원하지 않는 헤더 타입");
-                return Optional.empty();
+                throw new IllegalArgumentException(String.format("지원하지 않는 발송 타입 ::: type %s", type));
         }
         var result = Bytes.concat(begin.getBytes(CHARSET), payload);
         result = Bytes.concat(result, PROTOCOL_SUFFIX.getBytes(CHARSET));
-        return Optional.of(result);
+        return result;
     }
 
     public byte[] convertToBytes(Object obj) {
@@ -86,7 +84,7 @@ public class FirstTranslator implements Translator {
                 dataMap.put(token[0], token[1]);
             }
         } catch (Exception e) {
-            log.info("[수신] 전문 이상 발생 ::: payload {}", data);
+            log.info("수신 전문 이상 발생 ::: payload {}", data);
             return Optional.empty();
         }
         return Optional.of(dataMap);
