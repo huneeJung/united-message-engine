@@ -172,7 +172,7 @@ DB Select → Kafka Producer → Kafka Topic → Consumer → Protocol Converter
 1. **설정 암호화**
    - Jasypt 활용한 중요 정보 암호화
 
-2. **접근 제어(작업필요)**
+2. **접근 제어(작업 필요)**
    - IP 기반 접근 통제
    - 세션별 TPS 제어
 
